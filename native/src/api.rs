@@ -2,13 +2,31 @@
 // When adding new code to your project, note that only items used
 // here will be transformed to their Dart equivalents.
 
-use std::{sync::Arc, collections::HashMap, fmt::Display};
+use std::{sync::Arc, vec, io::ErrorKind, fmt::Display};
 
-use flutter_rust_bridge::frb;
+use futures::{Future, future::try_join_all};
+use tokio::{sync::{oneshot::error::RecvError, MutexGuard}, io::AsyncWriteExt, try_join};
 
-use futures::executor::block_on;
-use thiserror::Error as ThisError;
-use crate::{base::{data::{device_metadata::{Device, DeviceType, DeviceCommandCapability, DeviceData, DeviceImpl, ConnectionConfig, DeviceVariant, DeviceId}, device_state::{HSV, RGB, CT, DeviceState, RunningState, ColorState, Color, ColorMode, AnimationState, DirectModeState}, common::IPv4Connection, device_result::DeviceConnectionError, profile::{Profile, ProfileData, ProfileSingle, ProfileMultiple}}, device_controller::{DeviceActionFilter, DeviceController}}, APP, App, get_app, model_state::{Field, StorageField, AppendInField, AddedValue}, devices_impl::impl_switch};
+use crate::{
+    base::{
+        data::{
+            device_metadata::{
+                Device, DeviceType, DeviceCommandCapability, DeviceData, DeviceImpl, ConnectionConfig, DeviceVariant, DeviceId, DeviceStateProvider
+            }, 
+            device_state::{
+                HSV, RGB, CT, DeviceState, RunningState, ColorState, Color, AnimationState, DirectModeState, ColorMode, ColorTransfer
+            }, 
+            common::IPv4Connection, 
+            profile::{
+                Profile, ProfileData, ProfileSingle, ProfileMultiple
+            }, device_result::{DeviceActionResultMeta, DeviceResultCode, DeviceError, DeviceIOError, DeviceDetectErrorItem, DeviceDetectResult}
+        }, 
+    }, 
+    get_app, 
+    model_state::{
+        Field, StorageField, AppendInField, FieldRecord, FieldId, StorageOperator, Storage
+    }, devices_impl::impl_switch, actions::ActionBinder, App
+};
 
 // A plain enum without any fields. This is similar to Dart- or C-style enums.
 // flutter_rust_bridge is capable of generating code for enums with fields
@@ -66,86 +84,247 @@ pub fn rust_release_mode() -> bool {
     cfg!(not(debug_assertions))
 }
 
-pub fn init_app() {
-    get_app().load_data()
+#[tokio::main]
+pub async fn init_app() {
+    get_app().await.load_data()
 }
 
-pub fn get_stored_devices() -> Vec<DeviceDataInterface> {
-    match get_app().storage().get(Field::Devices) {
+#[tokio::main]
+pub async fn detect_new_device(device_name: String, connection: ConnectionConfigInterface) -> DeviceDetectResultInterface {
+    ActionBinder::new(get_app().await.storage()).connect_device(device_name, connection.into()).await.into()
+}
+
+#[tokio::main]
+pub async fn get_stored_devices() -> Vec<DeviceDataInterface> {
+    _get_stored_devices(get_app().await.storage())
+}
+
+fn _get_stored_devices(storage: &mut Storage) -> Vec<DeviceDataInterface> {
+    match storage.get(Field::Devices) {
         StorageField::Devices(devs) => devs.values().into_iter().map(|v| v.clone().into()).collect(),
         _ => unreachable!(),
     }   
 }
 
-pub fn detect_new_device(device_name: String, connection: ConnectionConfigInterface) -> DeviceDetectResult {
-    let x = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on(async {
-            impl_switch::detected_device_from(connection.into()).await
-        });
-    match x {
-        Ok((dev, id)) => {
-            let data = Device::new_stateless(
-                match get_app().storage().add(AppendInField::Device(DeviceData::new(device_name, id))) {
-                    AddedValue::Device(dt) => dt,
-                    _ => unreachable!(),
-                },
-                Arc::new(
-                    DeviceActionFilter {
-                        next: Arc::new(DeviceController {
-                            implementation: dev.for_using()
-                        })
-                    }
-                )
-            );
-            DeviceDetectResult::Ok(DeviceDataInterface::from(data.metadata))
-        },
-        Err(err) => DeviceDetectResult::Error(
-            err.into_iter().map(|(v1, v2)| DeviceDetectErrorItem(Box::new(v1), format!("{}", v2))).collect()
-        ),
+#[tokio::main]
+pub async fn remove_device(device_id: String) {
+    get_app().await.storage().remove(FieldId::Device(device_id))
+}
+
+#[tokio::main]
+pub async fn set_brightness(device_id: String, brightness: f32) -> DeviceStateUpdateResult {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id).await;
+    utils::state_result_to_interface(
+        ActionBinder::new(operator.storage).on_brightness_update(device, brightness).await
+    )
+}
+
+#[tokio::main]
+pub async fn set_rgb(device_id: String, rgb: RGBInterface) -> DeviceStateUpdateResult {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id).await;
+    utils::state_result_to_interface(
+        ActionBinder::new(operator.storage).on_color_rgb_update(device, rgb.into()).await
+    )
+}
+
+#[tokio::main]
+pub async fn set_hsv(device_id: String, hsv: HSVInterface) -> DeviceStateUpdateResult {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id).await;
+    utils::state_result_to_interface(
+        ActionBinder::new(operator.storage).on_color_hsv_update(device, hsv.into()).await
+    )
+}
+
+#[tokio::main]
+pub async fn set_ct(device_id: String, ct: CTInterface) -> DeviceStateUpdateResult {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id).await;
+    utils::state_result_to_interface(
+        ActionBinder::new(operator.storage).on_color_ct_update(device, ct.into()).await
+    )
+}
+
+#[tokio::main]
+pub async fn set_color_mode(device_id: String, color_mode: ColorMode) -> DeviceStateUpdateResult {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id).await;
+    utils::state_result_to_interface(
+        ActionBinder::new(operator.storage).on_color_mode_update(device, color_mode).await
+    )
+}
+
+#[tokio::main]
+pub async fn get_devices_for_using() -> Vec<DeviceInterface> {
+    let mut app = get_app().await;
+    let devs = _get_stored_devices(&mut app.storage);
+    let mut res: Vec<DeviceInterface> = vec![];
+    for dev in devs {
+        res.append(&mut vec![DeviceInterface {
+            id: dev.id.clone(),
+            state: Some(_get_device_state(dev.id.clone(), &mut app).await),
+            metadata: Box::new(dev),
+        }]);
+    };
+    res
+}
+
+#[tokio::main]
+pub async fn get_device_state(device_id: String) -> DeviceStateInterface {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id.clone()).await;
+    match app.storage.get_by_id(FieldId::DeviceState(device_id)) {
+        Some(FieldRecord::DeviceState(v)) => v.into(),
+        _ => match ActionBinder::new(&mut app.storage).sync_device_state(device).await {
+            Ok(v) => v.into(),
+            Err(e) => panic!("Error on sync_device_state"),
+        }
     }
 }
 
-pub fn get_devices_for_using() -> Vec<DeviceInterface> {
-    vec![DeviceInterface {
-        ..Default::default()
-    }]
+pub async fn _get_device_state(device_id: String, app: &mut MutexGuard<'static, App>) -> DeviceStateInterface {
+    let (operator, device) = get_operator_device_pair(app, device_id.clone()).await;
+    match app.storage.get_by_id(FieldId::DeviceState(device_id)) {
+        Some(FieldRecord::DeviceState(v)) => v.into(),
+        _ => match ActionBinder::new(&mut app.storage).sync_device_state(device).await {
+            Ok(v) => v.into(),
+            Err(e) => panic!("Error on sync_device_state"),
+        }
+    }
 }
 
-pub fn get_device_state(device_id: String) -> Option<DeviceStateInterface> {
-    match get_app().storage().get(Field::DevicesState) {
-        StorageField::DevicesState(states) => states.values().iter()
-            .find_map(|&v| if v.id != device_id { None } else { Some(DeviceStateInterface::from(v.clone())) }),
-        _ => unreachable!(),
+#[tokio::main]
+pub async fn sync_device_state(device_id: String) -> DeviceStateInterface {
+    let mut app = get_app().await;
+    let (operator, device) = get_operator_device_pair(&mut app, device_id).await;
+    match ActionBinder::new(operator.storage).sync_device_state(device).await {
+        Ok(v) => v.into(),
+        Err(e) => panic!("Error on sync_device_state"),
+    }
+}
+
+async fn get_operator_device_pair<'op>(
+    app: &'op mut MutexGuard<'static, App>, device_id: String
+) -> (StorageOperator<'op>, Device) {
+    let mut operator = StorageOperator::new(&mut app.storage);
+    let device = impl_switch::device_from_data(
+        operator.get_device_by_id(device_id), &mut operator
+    ).await;
+    (operator, device)
+}
+
+pub fn get_profiles() -> Vec<ProfileInterface> {
+    vec![ProfileInterface::default()]
+}
+
+mod utils {
+    use std::sync::Arc;
+
+    use crate::base::data::{device_state::DeviceState, device_result::DeviceActionResultMeta};
+
+    use super::{ DeviceStateUpdateResult };
+
+    pub fn state_result_to_interface(
+        result: Result<Arc<DeviceState>, Arc<DeviceActionResultMeta>>
+    ) -> DeviceStateUpdateResult {
+        match result {
+            Ok(v) => DeviceStateUpdateResult::Ok(v.into()),
+            Err(e) => DeviceStateUpdateResult::Err(e.as_ref().clone().into()),
+        }
+    }
+
+}
+
+impl From<ColorInterface> for ColorTransfer {
+    fn from(col: ColorInterface) -> Self {
+        match col {
+            ColorInterface::None => todo!(),
+            ColorInterface::HSV(hsv) => Self::HSV((*hsv).into()),
+            ColorInterface::RGB(rgb) => Self::RGB((*rgb).into()),
+            ColorInterface::CT(ct) => Self::CT((*ct).into()),
+        }
+    }
+}
+
+pub enum DeviceStateUpdateResult {
+    Ok(DeviceStateInterface),
+    Err(DeviceActionResultMetaInterface)
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceActionResultMetaInterface {
+    pub had_success: bool,
+    pub code: Box<DeviceResultCode>,
+    pub message: String,
+}
+
+impl Display for DeviceActionResultMetaInterface {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} (code: {}, msg: {})", if self.had_success {"Ok"} else {"Error"}, match *self.code {
+            DeviceResultCode::Ok => "Ok",
+            DeviceResultCode::ConnectionError => "ConnectionError",
+            DeviceResultCode::DeviceError => "DeviceError",
+            DeviceResultCode::RequestError => "RequestError",
+        }, self.message)
+    }
+}
+
+impl From<DeviceActionResultMeta> for DeviceActionResultMetaInterface {
+    fn from(res: DeviceActionResultMeta) -> Self {
+        Self {
+            code: Box::new(res.code),
+            had_success: res.had_success,
+            message: res.message
+        }
     }
 }
 
 #[derive(Debug)]
-pub enum DeviceDetectResult {
+pub enum DeviceDetectResultInterface {
     Ok(DeviceDataInterface),
-    Error(Vec<DeviceDetectErrorItem>)
+    Error(Vec<DeviceDetectErrorItemInterface>)
+}
+
+impl From<DeviceDetectResult> for DeviceDetectResultInterface {
+    fn from(r: DeviceDetectResult) -> Self {
+        match r {
+            DeviceDetectResult::Ok(d) => Self::Ok(d.into()),
+            DeviceDetectResult::Error(e) => Self::Error(
+                e.into_iter().map(|v| v.into()).collect()
+            ),
+        }
+    }
 }
 
 #[derive(Debug)]
-pub struct DeviceDetectErrorItem(pub Box<DeviceImpl>, pub String);
+pub struct DeviceDetectErrorItemInterface(pub Box<DeviceImpl>, pub String);
+
+impl From<DeviceDetectErrorItem> for DeviceDetectErrorItemInterface {
+    fn from(e: DeviceDetectErrorItem) -> Self {
+        Self(Box::new(e.0), e.1)
+    }
+}
 
 #[derive(Default, Debug, Clone)]
 pub struct DeviceInterface {
     pub id: String,
     pub metadata: Box<DeviceDataInterface>,
+    pub state: Option<DeviceStateInterface>
 }
 
 impl From<Device> for DeviceInterface {
     fn from(dt: Device) -> Self {
         Self {
             id: dt.metadata.id.clone(),
-            metadata: Box::new(DeviceDataInterface::from(dt.metadata))
+            metadata: Box::new(DeviceDataInterface::from(dt.metadata)),
+            state: Some(DeviceStateInterface::from(dt.state))
         }
     }
 }
 
+#[derive(Debug)]
 pub struct DeviceIdInterface {
     device_type: Box<DeviceType>,
     device_impl: Box<DeviceImpl>,
@@ -234,7 +413,7 @@ pub struct DeviceGroup {
 #[derive(Default, Debug, Clone)]
 pub enum RunningStateInterface {
     #[default] None,
-    Color(Box<ColorStateInteface>),
+    Color(Box<ColorStateInterface>),
     Animation(Box<AnimationStateInteface>),
     DirectMode(Box<DirectModeStateInterface>)
 }
@@ -243,9 +422,9 @@ impl<'a> From<RunningState<'a>> for RunningStateInterface {
     fn from(state: RunningState) -> Self {
         match state {
             RunningState::None => RunningStateInterface::None,
-            RunningState::Color(v) => RunningStateInterface::Color(Box::new(v.clone().into())),
-            RunningState::Animation(v) => RunningStateInterface::Animation(Box::new(v.clone().into())),
-            RunningState::DirectMode(v) => RunningStateInterface::DirectMode(Box::new(v.clone().into())),
+            RunningState::Color(v) => RunningStateInterface::Color(Box::new((*v).into())),
+            RunningState::Animation(v) => RunningStateInterface::Animation(Box::new((*v).into())),
+            RunningState::DirectMode(v) => RunningStateInterface::DirectMode(Box::new((*v).into())),
         }
     }
 }
@@ -294,12 +473,12 @@ impl From<IPv4Connection> for IPv4ConnectionInteface {
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct ColorStateInteface {
-    pub brightness: u8,
+pub struct ColorStateInterface {
+    pub brightness: f32,
     pub color: Box<ColorInterface>,
 }
 
-impl From<ColorState> for ColorStateInteface {
+impl From<ColorState> for ColorStateInterface {
     fn from(state: ColorState) -> Self {
         Self {
             brightness: state.brightness,
@@ -345,14 +524,31 @@ impl From<RGB> for RGBInterface {
     }
 }
 
+impl From<RGBInterface> for RGB {
+    fn from(rgb: RGBInterface) -> Self {
+        Self {
+            rgb: (rgb.rgb[0], rgb.rgb[1], rgb.rgb[2]),
+        }
+    }
+}
+
 #[derive(Default, Debug, Clone, Copy)]
 pub struct HSVInterface {
-    pub hue: u16,
-    pub saturation: u16,
+    pub hue: f32,
+    pub saturation: f32,
 }
 
 impl From<HSV> for HSVInterface {
     fn from(hsv: HSV) -> Self {
+        Self {
+            hue: hsv.hue,
+            saturation: hsv.saturation,
+        }
+    }
+}
+
+impl From<HSVInterface> for HSV {
+    fn from(hsv: HSVInterface) -> Self {
         Self {
             hue: hsv.hue,
             saturation: hsv.saturation,
@@ -369,6 +565,14 @@ impl From<CT> for CTInterface {
     fn from(ct: CT) -> Self {
         Self {
             temperature: ct.temperature
+        }
+    }
+}
+
+impl From<CTInterface> for CT {
+    fn from(ct: CTInterface) -> Self {
+        Self {
+            temperature: ct.temperature,
         }
     }
 }
@@ -427,7 +631,7 @@ impl<'dev, 'dev_state> From<ProfileData<'dev, 'dev_state>> for ProfileDataInterf
     fn from(dt: ProfileData) -> Self {
         match dt {
             ProfileData::None => ProfileDataInterface::None,
-            ProfileData::Single(dt) => ProfileDataInterface::Single(dt.clone().into()),
+            ProfileData::Single(dt) => ProfileDataInterface::Single(dt.into()),
             ProfileData::Multiple(dt) => ProfileDataInterface::Multiple(dt.clone().into()),
         }
     }
@@ -450,14 +654,14 @@ impl<'dev, 'dev_state> From<ProfileSingle<'dev, 'dev_state>> for ProfileSingleIn
 
 #[derive(Debug, Clone)]
 pub struct ProfileMultipleInterface {
-    pub devices: Vec<Arc<DeviceInterface>>,
+    pub devices: Vec<DeviceInterface>,
     pub state: Box<DeviceStateInterface>,
 }
 
 impl<'dev, 'dev_state> From<ProfileMultiple<'dev, 'dev_state>> for ProfileMultipleInterface {
     fn from(dt: ProfileMultiple) -> Self {
         Self {
-           devices: dt.devices.iter().map(|&v| Arc::new(v.clone().into())).collect(),
+           devices: dt.devices.iter().map(|&v| v.clone().into()).collect(),
            state: Box::new(dt.state.clone().into()),
         }
     }

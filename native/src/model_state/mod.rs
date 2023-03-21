@@ -3,7 +3,7 @@ use pickledb::PickleDb;
 use serde::Serialize;
 use strum::{ EnumIter, IntoEnumIterator };
 
-use crate::base::data::{device_metadata::{DeviceType, DeviceCommandCapability, DeviceData}, common::{IPv4Connection, Switch, Record}, device_state::{ColorState, HSV, RGB, CT, DeviceState}};
+use crate::{base::{data::{device_metadata::{DeviceType, DeviceCommandCapability, DeviceData, DeviceImpl, Device}, common::{IPv4Connection, Switch, Record}, device_state::{ColorState, HSV, RGB, CT, DeviceState}}, common::make_id}, get_app};
 
 pub mod database;
 
@@ -11,7 +11,9 @@ pub mod database;
 pub struct Storage {
     db: PickleDb,
     devices: StorageRecords<DeviceData>,
-    devices_state: StorageRecords<DeviceState>
+    devices_state: StorageRecords<DeviceState>,
+    connected_devices: Vec<Device>,
+    device_groups: Vec<Vec<String>>,
 }
 
 impl Debug for Storage {
@@ -30,6 +32,8 @@ impl Default for Storage {
             ),
             devices: StorageRecords::empty(),
             devices_state: StorageRecords::empty(),
+            connected_devices: vec![],
+            device_groups: vec![],
         }
     }
 }
@@ -51,17 +55,17 @@ impl Storage {
         Field::iter().for_each(|f| self.save_field(f))
     }
 
-    pub fn add(&mut self, field: AppendInField) -> AddedValue {
+    pub fn add(&mut self, field: AppendInField) -> FieldRecord {
         match field {
-            AppendInField::Device(v) => AddedValue::Device(self.devices.set(v)),
-            AppendInField::DeviceState(v) => AddedValue::DeviceState(self.devices_state.set(v)),
+            AppendInField::Device(v) => FieldRecord::Device(self.devices.set(v)),
+            AppendInField::DeviceState(v) => FieldRecord::DeviceState(self.devices_state.set(v)),
         }
     }
 
-    pub fn remove(&mut self, field: RemoveInField) {
+    pub fn remove(&mut self, field: FieldId) {
         match field {
-            RemoveInField::Device(v) => self.devices.remove(v.as_str()),
-            RemoveInField::DeviceState(v) => self.devices_state.remove(v.as_str()),
+            FieldId::Device(v) => self.devices.remove(v.as_str()),
+            FieldId::DeviceState(v) => self.devices_state.remove(v.as_str()),
         };
     }
 
@@ -72,6 +76,17 @@ impl Storage {
         }
     }
 
+    pub fn get_by_id(&mut self, field: FieldId) -> Option<FieldRecord> {
+        match field {
+            FieldId::Device(id) => self.found_object_to_field_record(
+                id, &self.devices.data, |f| FieldRecord::Device(f.clone())
+            ),
+            FieldId::DeviceState(id) => self.found_object_to_field_record(
+                id, &self.devices_state.data, |f| FieldRecord::DeviceState(f.clone())
+            ),
+        }
+    }
+
     fn save_field(&mut self, field: Field) {
         match field {
             Field::Devices => self.db.set(field.into(), &self.devices.values()).expect("DB Error"),
@@ -79,6 +94,67 @@ impl Storage {
         };
     }
 
+    fn found_object_to_field_record<T>(
+        &self, id: String, id_to_record: &HashMap<String, Arc<T>>, 
+        into_field: impl FnOnce(&Arc<T>) -> FieldRecord
+    ) -> Option<FieldRecord> {
+        id_to_record.get(id.as_str()).map(into_field)
+    }
+}
+
+
+pub struct StorageOperator<'op> {
+    pub storage: &'op mut Storage
+}
+
+impl<'op> StorageOperator<'op> {
+
+    pub fn new(storage: &'op mut Storage) -> Self { Self { storage } }
+
+    pub fn get_state_by_device_id(&mut self, dev_id: String) -> Arc<DeviceState> {
+        match self.storage.get_by_id(FieldId::DeviceState(dev_id)) {
+            Some(r) => match r {
+                FieldRecord::DeviceState(state) => state,
+                _ => unreachable!()
+            },
+            None => unreachable!("Device State not Found"),
+        }
+    }
+
+    pub fn get_stored_devices(&mut self) -> Vec<Arc<DeviceData>> {
+        match self.storage.get(Field::Devices) {
+            StorageField::Devices(devs) => devs.data.iter().map(|(_, v)| v.clone()).collect(),
+            _ => unreachable!(),
+        }   
+    }
+
+    pub fn get_device_by_id(&mut self, dev_id: String) -> Arc<DeviceData> {
+        match self.storage.get_by_id(FieldId::Device(dev_id)) {
+            Some(r) => match r {
+                FieldRecord::Device(device) => device,
+                _ => unreachable!()
+            },
+            None => unreachable!("Device not Found"),
+        }
+    }
+
+    pub fn add_device(&mut self, device: DeviceData) -> Arc<DeviceData> {
+        match self.storage.add(
+            AppendInField::Device(device)
+        ) {
+            FieldRecord::Device(dt) => dt,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn add_device_state(&mut self, state: DeviceState) -> Arc<DeviceState> {
+        match self.storage.add(
+            AppendInField::DeviceState(state)
+        ) {
+            FieldRecord::DeviceState(dt) => dt,
+            _ => unreachable!(),
+        }
+    }
 }
 
 pub enum StorageField<'a> {
@@ -91,7 +167,7 @@ pub enum AppendInField {
     DeviceState(DeviceState),
 }
 
-pub enum RemoveInField {
+pub enum FieldId {
     Device(String),
     DeviceState(String),
 }
@@ -102,7 +178,16 @@ pub enum Field {
     DevicesState,
 }
 
-pub enum AddedValue {
+impl From<FieldId> for Field {
+    fn from(f: FieldId) -> Self {
+        match f {
+            FieldId::Device(_) => Field::Devices,
+            FieldId::DeviceState(_) => Field::DevicesState,
+        }
+    }
+}
+
+pub enum FieldRecord {
     Device(Arc<DeviceData>),
     DeviceState(Arc<DeviceState>),
 }

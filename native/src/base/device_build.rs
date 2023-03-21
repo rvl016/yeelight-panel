@@ -1,38 +1,52 @@
 use std::{ sync::Arc, ops::Deref };
 
+use crate::device::impl_interface::DeviceImplRaw;
+
 use super::{
     data::{
         device_metadata::{
-            Device, DeviceData, DeviceStateProvider
+            Device, DeviceData, DeviceStateProvider, DeviceImpl
         }, 
         common::{
             ActionResult, GenericError
-        }
+        }, device_state::DeviceState
     }, 
-    device_controller::{ DeviceAction }
+    device_controller::{ DeviceAction, DeviceActionFilter, DeviceController }
 };
 
 impl Device {
     
-    pub fn new(metadata: Arc<DeviceData>, controller: Arc<dyn DeviceAction>) -> ActionResult<Self> {
-        let state = controller.clone().get_current_state(DeviceStateProvider::new(None, metadata.clone()));
-        match state.deref() {
-            Ok(d) => ActionResult::Ok(Self {
+    pub async fn new(metadata: Arc<DeviceData>, dev_controller: Arc<dyn DeviceAction>) -> ActionResult<Self> {
+        let state = dev_controller.clone().get_current_state(
+            DeviceStateProvider::new(None, metadata.clone())
+        ).await;
+        match state.as_ref() {
+            Ok(d) => Ok(Self {
                 metadata,
-                dev_controller: controller,
+                dev_controller,
                 state: d.data.clone().unwrap()
             }),
-            Err(err) => ActionResult::Err(
-                Box::new(GenericError::from(err))
-            ),
+            Err(e) => Err(e.clone()),
         }
     }
 
-    pub fn new_stateless(metadata: Arc<DeviceData>, controller: Arc<dyn DeviceAction>) -> Self {
+    pub fn new_stateless(metadata: Arc<DeviceData>, dev_controller: Arc<dyn DeviceAction>) -> Self {
         Self {
             metadata,
-            dev_controller: controller,
+            dev_controller,
             state: Default::default(),
         }
     }
+
+    pub fn from_impl(
+        metadata: Arc<DeviceData>, implementation: Box<dyn DeviceImplRaw>, state: Arc<DeviceState>
+    ) -> Self {
+        Self {
+            metadata,
+            dev_controller: DeviceImpl::controller_from_implementation(implementation),
+            state,
+        }
+    }
+
+    
 }

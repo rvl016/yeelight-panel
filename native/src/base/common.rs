@@ -1,22 +1,14 @@
-use std::{ io::ErrorKind, error::Error, fmt, sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard} };
+use std::{ error::Error, fmt, io::ErrorKind, sync::Arc };
 
 use rand::{Rng, distributions::Alphanumeric};
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use super::data::common::GenericError;
+use super::data::common::{GenericError};
 
 
-impl GenericError {
-    fn new(kind: ErrorKind, message: &str) -> GenericError {
-        GenericError {
-            kind,
-            message: message.to_owned(),
-        }
-    }
-}
-
-impl From<&Box<dyn Error>> for GenericError {
-    fn from(e: &Box<dyn Error>) -> GenericError {
-        GenericError::new(ErrorKind::Other, &format!("{}", e))
+impl From<Box<dyn Error>> for GenericError {
+    fn from(e: Box<dyn Error>) -> GenericError {
+        GenericError::new(ErrorKind::Other, String::from(format!("{}", e)))
     }
 }
 
@@ -27,26 +19,6 @@ impl fmt::Display for GenericError {
 }
 
 impl Error for GenericError {}
-
-
-pub struct RwLockProvider<T> {
-    data: Arc<RwLock<T>>,
-}
-
-impl<'data, T> RwLockProvider<T> {
-
-    pub fn new(data: &Arc<RwLock<T>>) -> Self {
-        Self { data: data.clone() }
-    }
-
-    pub fn reading(&'data self) -> RwLockReadGuard<'data, T> {
-        self.data.read().unwrap()
-    }
-
-    pub fn writing(&'data self) -> RwLockWriteGuard<'data, T> {
-        self.data.write().unwrap()
-    }
-}
 
 
 pub fn make_id() -> String {

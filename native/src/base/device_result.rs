@@ -4,13 +4,13 @@ use std::{
 };
 
 use super::data::{
-    device_result::{ DeviceActionResult, DeviceResult, DeviceError, DeviceIOError, DeviceActionResultMeta, DeviceMetaActionResult, DeviceStatusResult, DeviceResultState }, 
-    device_metadata::Device, 
+    device_result::{ DeviceActionResult, DeviceResult, DeviceError, DeviceIOError, DeviceActionResultMeta, DeviceMetaActionResult, DeviceStatusResult, DeviceResultState, DeviceResultCode }, 
     device_state::DeviceState
 };
 
 impl DeviceActionResultMeta {
     pub fn update_with(&mut self, result: DeviceStatusResult) -> &mut Self {
+        self.is_done = true;
         match result {
             DeviceStatusResult::Ok(msg) => {
                 self.set_success(msg);
@@ -23,11 +23,14 @@ impl DeviceActionResultMeta {
     }
 
     fn set_success(&mut self, msg: String) {
+        self.had_success = true;
         self.message = msg;
     }
 
     fn set_fail(&mut self, err: DeviceError) {
+        self.had_success = false;
         self.message = err.to_string();
+        self.code = DeviceResultCode::DeviceError;
         self.error = Some(err);
     }
 }
@@ -97,11 +100,14 @@ impl DeviceIOError {
 impl Display for DeviceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DeviceError::IO(_) => write!(f, "IOError({})", stringify!(_)),
+            DeviceError::IO(e) => write!(f, "IOError({})", match e {
+                DeviceIOError::Os(e) => format!("OS({})", e),
+                DeviceIOError::Simple(e) => format!("Simple({})", e),
+            }),
             DeviceError::ErrResponse(status, msg) => 
                 write!(f, "ResponseError(({}) => {})", status, msg),
             DeviceError::Recv(_) => write!(f, "RecvError({})", stringify!(_)),
-            DeviceError::Unknowm => write!(f, "Unknowm Error"),
+            DeviceError::Unknown => write!(f, "Unknowm Error"),
         }
         
     }

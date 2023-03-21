@@ -5,4 +5,5 @@ pub mod device_metadata;
 pub mod device_result;
 pub mod device_controller;
 pub mod device_build;
+pub mod device_state;
 pub mod network;
