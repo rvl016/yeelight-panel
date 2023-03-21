@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-import 'package:yeelight_panel/data/ui/main_menu/state.dart';
+import 'package:yeelight_panel/data/app_state.dart';
+import 'package:yeelight_panel/menus/menu_panel_builder.dart';
 
 import '../common/panel_button.dart';
 import '../layouts/root_layout.dart';
@@ -20,23 +21,83 @@ class MainMenu extends StatelessWidget {
       Column(children: (m.children ?? []).mapMany((mi) => mapWithChildren(mi)).toList())
     ];
     final colors = Get.theme.colorScheme;
+    final appState = context.watch<Rx<AppState>>();
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            right: BorderSide(width: 1, color: colors.onSecondaryContainer),
-            bottom: BorderSide(width: 1, color: colors.onSecondaryContainer)
+    return Column(
+      children: [
+        SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(width: 1, color: colors.onSecondaryContainer),
+                bottom: BorderSide(width: 1, color: colors.onSecondaryContainer)
+              ),
+              color: colors.onSecondaryContainer,
+            ),
+            child: IntrinsicWidth(
+              child: Column(
+                children: menus.mapMany((m) => mapWithChildren(m)).toList(),
+              ),
+            ),
           ),
-          color: colors.onSecondaryContainer,
         ),
-        child: IntrinsicWidth(
-          child: Column(
-            children: menus.mapMany((m) => mapWithChildren(m)).toList(),
-          ),
-        ),
-      ),
+        Obx(() {
+          final mainMenu = appState.value.mainMenu.value;
+          final menu = mainMenu.menu.value;
+
+          final ctrPerDevice = mainMenu.controlPerDevice.value.controlPanels.value.currentPanel.value;
+          final ctrPerGroup = mainMenu.controlPerGroup.value.controlPanels.value.currentPanel.value;
+          final panel = menu == MenuPanel.controlPerDevice ? ctrPerDevice : (
+            menu == MenuPanel.controlPerGroup ? ctrPerGroup : null
+          );
+          final child = MenuPanelBuilder(menu, panel).build(context);
+          if (child == null) {
+            return const SizedBox.shrink();
+          }
+          return Container(
+            width: 135,
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: colors.onSecondaryContainer, width: 1),
+                right: BorderSide(color: colors.onSecondaryContainer, width: 1),
+              )
+            ),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(width: 1, color: colors.onSecondaryContainer),
+                    )
+                  ),
+                  child: Column(
+                    children: Iterable.generate(11).map((i) => Container(
+                      height: 2, 
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(width: 0, color: colors.onTertiaryContainer),
+                        )
+                      ),
+                    )).toList(),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(width: 1, color: colors.onSecondaryContainer),
+                      bottom: BorderSide(width: 1, color: colors.onSecondaryContainer),
+                      top: BorderSide(width: 2, color: colors.onSecondaryContainer),
+                    ),
+                    color: colors.onPrimaryContainer,
+                  ),
+                  child: child,
+                ),
+              ],
+            ),
+          );
+        })
+      ],
     );
   }
 }
@@ -47,18 +108,6 @@ class MenuItem extends StatelessWidget {
   final MenuItemData menu;
 
   const MenuItem(this.menu, {super.key});
-
-  void _toggleChildrenOpenness(BuildContext ctx) {
-    final isOpen = ctx.read<RxBool>();
-    isOpen.value = ! isOpen.value;
-  }
-
-  void _showMenuPanel(BuildContext ctx) {
-    final panel = menu.panel;
-    if (panel != null) {
-      ctx.read<Rx<MainMenuState>>().value.menu.value = panel;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +163,18 @@ class MenuItem extends StatelessWidget {
         )
       ),
     );
+  }
+
+  void _toggleChildrenOpenness(BuildContext ctx) {
+    final isOpen = ctx.read<RxBool>();
+    isOpen.value = ! isOpen.value;
+  }
+
+  void _showMenuPanel(BuildContext ctx) {
+    final panel = menu.panel;
+    if (panel != null) {
+      ctx.read<Rx<MainMenuState>>().value.menu.value = panel;
+    }
   }
 }
 

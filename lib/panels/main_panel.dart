@@ -2,16 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:yeelight_panel/data/app_state.dart';
-import 'package:yeelight_panel/data/ui/main_menu/state.dart';
 import 'package:yeelight_panel/layouts/control_device_layout.dart';
 import 'package:yeelight_panel/layouts/control_groups_layout.dart';
 import 'package:yeelight_panel/layouts/devices_layout.dart';
-import 'package:yeelight_panel/menus/control_menu.dart';
 import 'package:yeelight_panel/panels/abstract_panel.dart';
-import 'package:yeelight_panel/widgets/devices_list.dart';
 
 import '../layouts/root_layout.dart';
-import '../menus/main_menu.dart';
 
 class MainPanel extends AbstractPanel<MenuPanel> {
 
@@ -34,9 +30,9 @@ class MenuPanelOperator extends MenuOperator<MenuPanel> {
   }
 
   MenuPanelOperator(MenuPanel curMenu) : super(curMenu, {
-    MenuPanel.controlPerDevice: (ctx) => provided(ctx, (s) => s.controlPerDevice, ControlDeviceLayout()),
-    MenuPanel.controlPerGroup: (ctx) => provided(ctx, (s) => s.controlPerGroup, ControlGroupsLayout()),
-    MenuPanel.devices: (ctx) => provided(ctx, (s) => s.devices, DevicesLayout()),
+    MenuPanel.controlPerDevice: (ctx) => provided(ctx, (s) => s.controlPerDevice, const ControlDeviceLayout()),
+    MenuPanel.controlPerGroup: (ctx) => provided(ctx, (s) => s.controlPerGroup, const ControlGroupsLayout()),
+    MenuPanel.devices: (ctx) => provided(ctx, (s) => s.devices, const DevicesLayout()),
   });
 
 }

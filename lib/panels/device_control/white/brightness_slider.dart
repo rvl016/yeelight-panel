@@ -1,50 +1,119 @@
+import 'dart:math';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
-import 'package:yeelight_panel/common/ct_color.dart';
+import 'package:provider/provider.dart';
+import 'package:yeelight_panel/data/app_state.dart';
 
 class BrightnessSlider extends StatelessWidget {
   const BrightnessSlider({super.key, required this.brightness});
 
-  final RxInt brightness;
+  final RxDouble brightness;
 
   @override
   Widget build(BuildContext context) {
+    final panels = context.watch<Rx<ControlPanels>>();
+    final colors = Get.theme.colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 4,
+      color: colors.onPrimaryContainer,
+      padding: const EdgeInsets.only(
+        top: 4,
       ),
-      child: Obx(() => SliderTheme(
-        data: SliderThemeData(
-          trackShape: GradientRectSliderTrackShape(
-            gradient: LinearGradient(
-              colors: [Colors.black, Colors.white],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (ctx, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth,
+                height: 32,
+                child: CustomPaint(
+                  painter: SliderTicks(),
+                ),
+              );
+            },
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
             ),
+            child: Obx(() {
+              final curColorNoBright = HSLColor.fromColor(panels.value.currentColorNoBrightness().value);
+              const count = 100;
+              return SliderTheme(
+                data: SliderThemeData(
+                  trackShape: GradientRectSliderTrackShape(
+                    gradient: LinearGradient(
+                      colors: Iterable<int>.generate(count + 1).map(
+                        (i) => curColorNoBright.withAlpha(i / count).toColor()
+                      ).toList(),
+                    ),
+                  ),
+                  trackHeight: 24,
+                  thumbColor: colors.onTertiaryContainer,
+                  inactiveTrackColor: Colors.white10,
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 18.0),
+                  overlayColor: colors.onTertiaryContainer.withAlpha(64),
+                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 24.0),
+                  valueIndicatorShape: const DropSliderValueIndicatorShape(),
+                  valueIndicatorColor: colors.onPrimaryContainer,
+                  valueIndicatorTextStyle: Get.textTheme.labelMedium
+                ),
+                child: Listener(
+                  onPointerSignal: (ev) {
+                    if (ev is PointerScrollEvent) {
+                      final scroll = ev.scrollDelta;
+                      brightness.value = max(min(brightness.value - (scroll.dx + scroll.dy) / 5000, 1), 0);
+                    }
+                  },
+                  child: Slider(
+                    min: 0,
+                    max: 1.0,
+                    label: '${(brightness.value * 100).toInt()}',
+                    secondaryTrackValue: 1.0,
+                    value: brightness.value.toDouble(),
+                    onChanged: (value) => brightness.value = min(max(value, 0), 1),
+                  ),
+                ),
+              );
+            }),
           ),
-          trackHeight: 32,
-          thumbColor: CTColor(brightness.value),
-          inactiveTrackColor: Colors.white10,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 18.0),
-          overlayColor: Colors.red.withAlpha(0),
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 28.0),
-          activeTickMarkColor: Colors.red[700],
-          inactiveTickMarkColor: Colors.red[100],
-          valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
-          valueIndicatorColor: Colors.black,
-          valueIndicatorTextStyle: const TextStyle(
-            color: Colors.white,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4
+                ),
+                decoration: BoxDecoration(
+                  color: colors.onTertiaryContainer,
+                  borderRadius: const BorderRadius.only(topRight: Radius.elliptical(16, 6)),
+                  boxShadow: [
+                    BoxShadow(color: colors.onSecondaryContainer, spreadRadius: 2)
+                  ]
+                ),
+                child: const Text("Brightness"),
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: colors.onSecondaryContainer,
+                        width: 2,
+                      )
+                    )
+                  ),
+                )
+              ),
+            ],
           ),
-        ),
-        child: Slider(
-          min: 0,
-          max: 255,
-          label: '${brightness.value}',
-          value: brightness.value.toDouble(),
-          onChanged: (value) => brightness.value = value.toInt(),
-        ),
+        ],
       ),
-    ));
+    );
   }
 }
 
@@ -136,5 +205,44 @@ class CustomSliderThumbCircle extends SliderComponentShape {
 
   String getValue(double value) {
     return (min + (max - min) * value).round().toString();
+  }
+}
+
+class SliderTicks extends CustomPainter {
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const margin = 16.0, tickHeight = 12.0, innerTickHeight = 8.0;
+    var curOffset = Offset(margin, size.height - 4);
+    canvas.translate(.75, tickHeight);
+    const tickColor = Color.fromARGB(255, 42, 42, 42);
+    for (var i = 0; i <= 100; i += 5) {
+      final isEven = i % 2 == 0 ? 1 : 0;
+      canvas.drawLine(
+        curOffset, curOffset + Offset(0, - innerTickHeight - (tickHeight - innerTickHeight) * isEven), 
+        Paint()..strokeWidth = 1.25 + isEven / 4..color = tickColor
+      );
+      if (isEven == 1) {
+        final painter = TextPainter(
+          text: TextSpan(
+            text: i.toString(), 
+            style: TextStyle(
+              fontWeight: FontWeight.normal,
+              fontSize: 10,
+              color: Get.theme.colorScheme.secondary
+            )
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr
+        )..layout(maxWidth: 20);
+        painter.paint(canvas, curOffset + Offset(- painter.width / 2, - painter.height - 14));
+      }
+      curOffset = curOffset.translate((size.width - 2 * margin) / 20, 0);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

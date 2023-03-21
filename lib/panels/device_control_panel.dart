@@ -7,7 +7,7 @@ import 'abstract_panel.dart';
 
 class ControlMainPanel extends AbstractPanel<ControlMenuPanel> {
 
-  const ControlMainPanel({Key? key}) : super(key: key);
+  const ControlMainPanel({super.key});
 
   @override
   Widget getPanel(ControlMenuPanel curMenu, BuildContext ctx) => ControlMenuPanelOperator(curMenu).toPanel(ctx);
@@ -16,8 +16,8 @@ class ControlMainPanel extends AbstractPanel<ControlMenuPanel> {
 class ControlMenuPanelOperator extends MenuOperator<ControlMenuPanel> {
 
   ControlMenuPanelOperator(ControlMenuPanel curMenu) : super(curMenu, {
-    ControlMenuPanel.white: (ctx) => WhitePanel(),
-    ControlMenuPanel.colorWheel: (ctx) => ColorPanel(),
+    ControlMenuPanel.white: (ctx) => const WhitePanel(),
+    ControlMenuPanel.colorWheel: (ctx) => const ColorPanel(),
     ControlMenuPanel.colorFlow: (ctx) => Container(child: Text("Color Flow")),
     ControlMenuPanel.animated: (ctx) => Container(child: Text("Animated")),
     ControlMenuPanel.streamed: (ctx) => Container(child: Text("Streamed")),
