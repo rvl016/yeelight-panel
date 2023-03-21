@@ -2,28 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 import 'package:yeelight_panel/actions/data_binders.dart';
+import 'package:yeelight_panel/data/model/base.dart';
 import 'package:yeelight_panel/data/model/device.dart';
+import 'package:yeelight_panel/data/model_state.dart';
 
 import '../bridge_definitions.dart';
+import '../data/app_state.dart';
 import 'action_base.dart';
 import 'common/list_intents.dart' as list_intents;
 
 
 class TestConnectionIntent extends Intent {}
 
-class DeviceTableSelect extends ListActionBase<
-  list_intents.SelectIntent<DeviceDataInterface>, DeviceDataInterface, DeviceDataBinder
-> {
-  DeviceTableSelect(super.data);
+class DataTableSelect<DtInterf extends Data, DtBind extends DataBinder> 
+  extends ListActionBase<list_intents.SelectIntent<DtInterf>, DtInterf, DtBind> 
+{
+  DataTableSelect(super.data);
 
   @override
-  void invoke(list_intents.SelectIntent<DeviceDataInterface> intent) {
-    data.state.selecteditem.value = intent.data;
+  void invoke(list_intents.SelectIntent<DtInterf> intent) {
+    data.select(intent.data.id);
   }
 }
 
-class DeviceTableAdd extends ListActionBase<list_intents.AddIntent, DeviceDataInterface, DeviceDataBinder> {
-  DeviceTableAdd(super.data);
+class DeviceTableChooseSelected extends ListActionBase<
+  list_intents.ChooseSelectedIntent, DeviceInterface, DeviceBinder
+> {
+
+  DeviceTableChooseSelected(super.data);
+
+  @override
+  Future<DeviceStateInterface> invoke(list_intents.ChooseSelectedIntent intent) {
+    final dev = data.state.selectedItem.value!;
+    final controlState = intent.controlState;
+    return controlState.value.maybeWhen(
+      one: (device, state) {
+        device.value = dev;
+        return data.binder.getDeviceState(dev).then((value) => state.value = value);
+      }, 
+      multi: (devices, state) {
+        devices.addIf(devices.firstWhereOrNull((d) => d.id == dev.id) == null, dev);
+        return Future.value(state.value);
+      },
+      orElse: () => throw UnimplementedError()
+    );
+  }
+}
+
+class DeviceDataTableAdd extends ListActionBase<list_intents.AddIntent, DeviceDataInterface, DeviceDataBinder> {
+  DeviceDataTableAdd(super.data);
 
   @override
   Object? invoke(list_intents.AddIntent intent) {
@@ -32,18 +59,20 @@ class DeviceTableAdd extends ListActionBase<list_intents.AddIntent, DeviceDataIn
   }
 }
 
-class DeviceTableDelete extends ListActionBase<list_intents.DeleteIntent, DeviceDataInterface, DeviceDataBinder> {
-  DeviceTableDelete(super.data);
+class DataTableDelete<DtInterf extends Data, DtBind extends DataBinder> 
+  extends ListActionBase<list_intents.DeleteIntent, DtInterf, DtBind> 
+{
+  DataTableDelete(super.data);
 
   @override
-  Object? invoke(list_intents.DeleteIntent intent) {
-    // TODO: implement invoke
-    throw UnimplementedError();
+  Future<void> invoke(list_intents.DeleteIntent intent) {
+    return data.removeSelected();
   }
 }
 
-class DeviceTableEdit extends ListActionBase<list_intents.EditIntent, DeviceDataInterface, DeviceDataBinder> {
-  DeviceTableEdit(super.data);
+
+class DeviceDataTableEdit extends ListActionBase<list_intents.EditIntent, DeviceDataInterface, DeviceDataBinder> {
+  DeviceDataTableEdit(super.data);
 
   @override
   Object? invoke(list_intents.EditIntent intent) {
@@ -52,9 +81,9 @@ class DeviceTableEdit extends ListActionBase<list_intents.EditIntent, DeviceData
   }
 }
 
-class DeviceTableSave extends ListActionBase<list_intents.SaveIntent, DeviceDataInterface, DeviceDataBinder> {
+class DeviceDataTableSave extends ListActionBase<list_intents.SaveIntent, DeviceDataInterface, DeviceDataBinder> {
   
-  DeviceTableSave(super.data);
+  DeviceDataTableSave(super.data);
 
   @override
   Object? invoke(list_intents.SaveIntent intent) {
@@ -64,26 +93,28 @@ class DeviceTableSave extends ListActionBase<list_intents.SaveIntent, DeviceData
 
 }
 
-class DeviceTableFetch extends ListActionBase<list_intents.FetchAllIntent, DeviceDataInterface, DeviceDataBinder> {
+class DataTableFetch<DtInterf extends Data, DtBind extends DataBinder<DtInterf>> 
+  extends ListActionBase<list_intents.FetchAllIntent, DtInterf, DtBind> 
+{
   
-  DeviceTableFetch(super.data);
+  DataTableFetch(super.data);
 
   @override
-  Future<List<DeviceDataInterface>> invoke(list_intents.FetchAllIntent intent) {
+  Future<List<DtInterf>> invoke(list_intents.FetchAllIntent intent) {
     return data.binder.fetch().then((value) {
       data.state.replaceWith(value);
       data.state.doNeedFetch.value = false;
       return value;
-    });
+    }).onError((error, stackTrace) => throw Exception(error));
   }
 
 }
 
-class DeviceTableCreate extends ListActionBase<
+class DeviceDataTableCreate extends ListActionBase<
   list_intents.CreateIntent<Tuple2<String, ConnectionConfigInterface>>, DeviceDataInterface, DeviceDataBinder
 > {
   
-  DeviceTableCreate(super.data);
+  DeviceDataTableCreate(super.data);
 
   @override
   Future<DeviceDataInterface> invoke(list_intents.CreateIntent<Tuple2<String, ConnectionConfigInterface>> intent) {

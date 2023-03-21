@@ -43,11 +43,10 @@ class InputDialog extends StatelessWidget {
     decoration: BoxDecoration(
       color: color,
       borderRadius: const BorderRadius.all(Radius.circular(4)),
-      boxShadow: [BoxShadow(
-        color: Get.theme.colorScheme.background,
-        blurStyle: BlurStyle.solid,
-        blurRadius: 6,
-        spreadRadius: 1
+      boxShadow: const [BoxShadow(
+        color: Colors.black38,
+        blurRadius: 3,
+        spreadRadius: 4
       )],
     ),
     child: child,
@@ -154,5 +153,5 @@ class ThemeColors {
 
   Color highlightTintColor(int alpha) => Color.fromARGB(alpha, 15, 131, 203);
   
-  Color highlightBorderTintColor() => Color.fromARGB(255, 78, 152, 198);
+  Color highlightBorderTintColor() => const Color.fromARGB(255, 78, 152, 198);
 }

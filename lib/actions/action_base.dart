@@ -23,13 +23,24 @@ class ListPageOperator<T extends Data, TS extends DataBinder> {
 
   Rx<T> select(String targetId) => state.select(targetId);
 
+  Future<void> removeSelected() {
+    if (state.selectedItem.value == null) {
+      return Future.value();
+    }
+    return binder.remove(state.selectedItem.value!.id).then((_) => state.removeSelected());
+  }
+
 }
 
 
-abstract class DataBinder {
+abstract class DataBinder<T> {
 
   final DataSourceApi source;
 
   DataBinder(this.source);
+
+  Future<void> remove(String targetId);
+
+  Future<List<T>> fetch();
 
 }
