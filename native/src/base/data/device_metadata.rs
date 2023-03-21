@@ -1,6 +1,5 @@
 use std::fmt::Display;
 use std::sync::Arc;
-
 use serde::{Serialize, Deserialize};
 use strum::EnumIter;
 
@@ -16,7 +15,6 @@ pub struct Device {
     pub state: Arc<DeviceState>,
 }
 
-
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceData {
     pub id: String,
@@ -25,11 +23,11 @@ pub struct DeviceData {
     pub device_impl: DeviceImpl,
     pub device_variant: DeviceVariant,
     pub capabilities: Vec<DeviceCommandCapability>,
+    pub mac_address: (u8, u8, u8, u8, u8, u8),
 }
 
 impl DeviceData {
     pub fn new(name: String, device_id: DeviceId) -> Self {
-        
         Self {
             id: make_id(),
             name,
@@ -37,6 +35,7 @@ impl DeviceData {
             device_impl: device_id.device_impl,
             device_variant: device_id.device_variant,
             capabilities: device_id.into(),
+            mac_address: device_id.mac_address
         }
     }
 }
@@ -50,7 +49,10 @@ impl Record for DeviceData {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum DeviceCommandCapability {
     SwitchPower,
-    SetColor,
+    SetBrightness,
+    SetRGB,
+    SetHSV,
+    SetCT,
     SetAnimation,
     SetDirectMode,
 }
@@ -98,7 +100,8 @@ impl From<DeviceImpl> for &str {
 pub struct DeviceId {
     pub device_type: DeviceType,
     pub device_impl: DeviceImpl,
-    pub device_variant: DeviceVariant
+    pub device_variant: DeviceVariant,
+    pub mac_address: (u8, u8, u8, u8, u8, u8),
 }
 
 impl From<DeviceId> for Vec<DeviceCommandCapability> {

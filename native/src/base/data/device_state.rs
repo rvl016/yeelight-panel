@@ -1,4 +1,5 @@
 use serde::{ Serialize, Deserialize };
+
 use super::{ common::{Switch, Record}, device_metadata::ConnectionConfig };
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -8,6 +9,16 @@ pub struct DeviceState {
     pub power_state: Switch,
     pub running_mode: RunningMode,
     _states: States
+}
+
+impl DeviceState {
+    pub fn for_new_device_data(dev_id: String, config: ConnectionConfig) -> Self {
+        Self {
+            id: dev_id,
+            config,
+            ..Default::default()
+        }
+    }
 }
 
 impl Record for DeviceState {
@@ -51,8 +62,8 @@ pub struct AnimationState {
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct HSV {
-    pub hue: u16,
-    pub saturation: u16,
+    pub hue: f32,
+    pub saturation: f32,
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -67,7 +78,7 @@ pub struct CT {
 
 #[derive(Default, Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct ColorState {
-    pub brightness: u8,
+    pub brightness: f32,
     pub color_mode: ColorMode,
     _colors: Colors,
 }
@@ -80,12 +91,29 @@ pub enum Color<'color_state> {
     CT(&'color_state CT)
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum ColorTransfer {
+    HSV(HSV),
+    RGB(RGB),
+    CT(CT),
+}
+
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ColorMode {
     #[default] None,
     HSV,
     RGB,
     CT
+}
+
+impl From<ColorTransfer> for ColorMode {
+    fn from(col: ColorTransfer) -> Self {
+        match col {
+            ColorTransfer::HSV(_) => ColorMode::HSV,
+            ColorTransfer::RGB(_) => ColorMode::RGB,
+            ColorTransfer::CT(_) => ColorMode::CT,
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -98,11 +126,11 @@ struct Colors {
 #[derive(Debug, Default)]
 pub struct DeviceStateBuilder {
     power_state: Option<Switch>,
-    color_brightness: Option<u8>,
+    color_brightness: Option<f32>,
     color_ct_temperature: Option<u16>,
     color_rgb: Option<(u8, u8, u8)>,
-    color_hsv_hue: Option<u16>,
-    color_hsv_saturation: Option<u16>,
+    color_hsv_hue: Option<f32>,
+    color_hsv_saturation: Option<f32>,
     color_mode: Option<ColorMode>,
     running_mode: Option<RunningMode>,
 }
@@ -114,7 +142,7 @@ impl DeviceStateBuilder {
         self
     }
 
-    pub fn color_brightness(mut self, dt: u8) -> Self {
+    pub fn color_brightness(mut self, dt: f32) -> Self {
         self.color_brightness = Some(dt);
         self
     }
@@ -129,12 +157,12 @@ impl DeviceStateBuilder {
         self
     }
 
-    pub fn color_hsv_hue(mut self, dt: u16) -> Self {
+    pub fn color_hsv_hue(mut self, dt: f32) -> Self {
         self.color_hsv_hue = Some(dt);
         self
     }
 
-    pub fn color_hsv_saturation(mut self, dt: u16) -> Self {
+    pub fn color_hsv_saturation(mut self, dt: f32) -> Self {
         self.color_hsv_saturation = Some(dt);
         self
     }
@@ -185,15 +213,27 @@ impl DeviceStateBuilder {
 
 
 impl DeviceState {
-    pub fn color_state(&mut self) -> &mut ColorState {
+    pub fn color_state(&self) -> &ColorState {
+        &self._states.color
+    }
+
+    pub fn color_state_mut(&mut self) -> &mut ColorState {
         &mut self._states.color
     }
 
-    pub fn animation_state(&mut self) -> &mut AnimationState {
+    pub fn animation_state(&self) -> &AnimationState {
+        &self._states.animation
+    }
+
+    pub fn animation_state_mut(&mut self) -> &mut AnimationState {
         &mut self._states.animation
     }
 
-    pub fn direct_state(&mut self) -> &mut DirectModeState {
+    pub fn direct_state(&self) -> &DirectModeState {
+        &self._states.direct
+    }
+
+    pub fn direct_state_mut(&mut self) -> &mut DirectModeState {
         &mut self._states.direct
     }
 
@@ -209,7 +249,29 @@ impl DeviceState {
 }
 
 impl ColorState {
-    pub fn rgb(&mut self) -> &RGB {
+    pub fn new_merged(&self, brightness: f32, color: ColorTransfer) -> Self {
+        let mut state = Self {
+            brightness,
+            color_mode: color.into(),
+            _colors: Colors {
+                ct: self._colors.ct,
+                hsv: self._colors.hsv,
+                rgb: self._colors.rgb,
+            }
+        };
+        match color {
+            ColorTransfer::HSV(hsv) => state._colors.hsv = hsv,
+            ColorTransfer::RGB(rgb) => state._colors.rgb = rgb,
+            ColorTransfer::CT(ct) => state._colors.ct = ct,
+        };
+        state
+    }
+
+    pub fn rgb(&self) -> &RGB {
+        &self._colors.rgb
+    }
+
+    pub fn rgb_mut(&mut self) -> &mut RGB {
         &mut self._colors.rgb
     }
 
@@ -217,8 +279,16 @@ impl ColorState {
         &self._colors.hsv
     }
 
-    pub fn ct(&self) -> &CT {
+    pub fn hsv_mut(&mut self) -> &mut HSV {
+        &mut self._colors.hsv
+    }
+
+    pub fn ct(&mut self) -> &CT {
         &self._colors.ct
+    }
+
+    pub fn ct_mut(&mut self) -> &mut CT {
+        &mut self._colors.ct
     }
 
     pub fn color(&self) -> Color {
@@ -227,6 +297,15 @@ impl ColorState {
             ColorMode::HSV => Color::HSV(&self._colors.hsv),
             ColorMode::RGB => Color::RGB(&self._colors.rgb),
             ColorMode::CT => Color::CT(&self._colors.ct),
+        }
+    }
+
+    pub fn set(&mut self, color: Color) {
+        match color {
+            Color::None => (),
+            Color::HSV(hsv) => self._colors.hsv = *hsv,
+            Color::RGB(rgb) => self._colors.rgb = *rgb,
+            Color::CT(ct) => self._colors.ct = *ct,
         }
     }
 }

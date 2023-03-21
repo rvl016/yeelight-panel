@@ -1,8 +1,5 @@
-use std::{ error::Error, io::ErrorKind, sync::Arc };
-
+use std::io::ErrorKind;
 use serde::{Serialize, Deserialize};
-
-use super::device_metadata::{DeviceType, DeviceImpl, DeviceVariant};
 
 #[derive(Clone, Debug)]
 pub struct GenericError {
@@ -10,20 +7,27 @@ pub struct GenericError {
     pub message: String,
 }
 
-pub type ActionResult<T> = Result<T, Box<dyn Error>>;
+impl GenericError {
+    pub fn new(kind: ErrorKind, msg: String) -> Self {
+        Self {
+            kind,
+            message: msg
+        }
+    }
+}
+
+pub type ActionResult<T> = Result<T, GenericError>;
 
 pub const NULL_IPV4_CONNECTION: IPv4Connection = IPv4Connection {
     ip: (0, 0, 0, 0),
     port: 0,
 };
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IPv4Connection {
     pub ip: (u8, u8, u8, u8),
     pub port: u16,
 }
-
-
 
 impl IPv4Connection {
     pub fn get_str_ip(&self) -> String {

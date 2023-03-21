@@ -1,8 +1,16 @@
-use std::{ io::{ ErrorKind }, sync::{Arc}, fmt::Display, error::Error };
+use std::{ sync::Arc, fmt::Display, io::ErrorKind };
 use thiserror::Error as ThisError;
-use tokio::sync::oneshot::error::RecvError;
+use tokio::sync::{ oneshot::error::RecvError };
 
-use super::{device_state::DeviceState, common::ActionResult, device_metadata::DeviceId};
+use super::{
+    device_state::DeviceState, 
+    common::ActionResult, 
+    device_metadata::{
+        DeviceId, 
+        DeviceData, 
+        DeviceImpl
+    }
+};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub enum DeviceResultCode {
@@ -14,7 +22,7 @@ pub enum DeviceResultCode {
 
 #[derive(ThisError, Debug, Clone)]
 pub enum DeviceError {
-    Unknowm,
+    Unknown,
     IO(DeviceIOError),
     ErrResponse(i32, String),
     Recv(RecvError),
@@ -56,6 +64,15 @@ pub struct DeviceActionResult {
     pub previous_state: Arc<DeviceState>,
     pub current_state: Option<Arc<DeviceState>>,
 }
+
+#[derive(Debug, Clone)]
+pub enum DeviceDetectResult {
+    Ok(Arc<DeviceData>),
+    Error(Vec<DeviceDetectErrorItem>)
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceDetectErrorItem(pub DeviceImpl, pub String);
 
 pub type DeviceActionResultWrapped = Arc<ActionResult<DeviceActionResult>>;
 
