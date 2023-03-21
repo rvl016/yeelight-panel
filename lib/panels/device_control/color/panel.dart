@@ -1,32 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yeelight_panel/common/framed.dart';
+import 'package:yeelight_panel/data/app_state.dart';
 
-import 'brightness_control.dart';
-import 'brightness_slider.dart';
+import '../white/brightness_slider.dart';
 import 'color_control.dart';
-import 'color_wheel.dart';
 
 class ColorPanel extends StatelessWidget {
   const ColorPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Row(
-        children: [
-          Column(
-            children: const [
-              ColorWheel(),
-              BrightnessSlider()
-            ],
-          ),
-          Column(
-            children: const [
-              ColorControl(),
-              BrightnessControl()
-            ],
-          )
-        ]
-      ),
+    final panelData = context.watch<ControlPanels>().colorPanel;
+    return Column(
+      children: [
+        Framed(child: BrightnessSlider(brightness: panelData.brightness)),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            HueControl(
+              hue: panelData.hue,
+              saturation: panelData.saturation,
+              step: panelData.step,
+              indicatorMode: panelData.indicatorMode,
+            ),
+            SaturationControl(
+              hue: panelData.hue,
+              saturation: panelData.saturation,
+              step: panelData.step,
+              indicatorMode: panelData.indicatorMode,
+            ),
+          ],
+        ),
+      ]
     );
   }
 }

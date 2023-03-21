@@ -7,14 +7,18 @@ class KelvinCurve extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SecondaryPanelLayout(
-      title: "Kelvin Curve",
-      child: Container(
-        //child: LineChart(
-        //  LineChartData(),
-        //  swapAnimationDuration: Duration(milliseconds: 500),
-        //  swapAnimationCurve: Curves.ease,
-        //),
+    return Container(
+      width: 120,
+      child: SecondaryPanelLayout(
+        title: "Kelvin Curve",
+        children: [
+    
+          //child: LineChart(
+          //  LineChartData(),
+          //  swapAnimationDuration: Duration(milliseconds: 500),
+          //  swapAnimationCurve: Curves.ease,
+          //),
+        ]
       ),
     );
   }

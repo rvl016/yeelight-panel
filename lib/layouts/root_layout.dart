@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:match/match.dart';
 import 'package:provider/provider.dart';
 import 'package:yeelight_panel/data/app_state.dart';
 
 import '../menus/main_menu.dart';
 import '../panels/main_panel.dart';
+
+part 'root_layout.g.dart';
 
 class MainLayout extends StatelessWidget {
 
@@ -42,6 +45,7 @@ class MainLayout extends StatelessWidget {
   }
 }
 
+@match
 enum MenuPanel {
   controlPerDevice,
   controlPerGroup,

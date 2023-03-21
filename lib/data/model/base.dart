@@ -4,7 +4,7 @@ mixin Clonable<T> {
   T clone();
 }
 
-mixin Data<T> {
+mixin Data {
   String get id;
 }
 

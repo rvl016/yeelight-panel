@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:yeelight_panel/actions/common/list_intents.dart' as intents;
 import 'package:yeelight_panel/common/data_display/form_fields.dart';
+import 'package:yeelight_panel/data/model/base.dart';
 import 'package:yeelight_panel/data/model/device.dart';
 import 'package:yeelight_panel/layouts/common/dialog.dart';
 
@@ -10,6 +11,7 @@ import '../actions/action_base.dart';
 import '../actions/data_binders.dart';
 import '../bridge_definitions.dart';
 import '../data/model_state.dart';
+import 'common/list.dart';
 
 
 
@@ -49,98 +51,79 @@ class DeviceListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() { 
-      final dev = device.value;
-      final devType = dev.deviceType;
-      final capabilities = dev.capabilities;
 
       final colors = Get.theme.colorScheme;
       final state = context.watch<Rx<ListPageState<DeviceDataInterface>>>();
-      return Obx(() { 
-        final isSelected = state.value.selecteditem.value?.id == dev.id;
-        return ListTile(
-          contentPadding: const EdgeInsets.all(0),
-          minVerticalPadding: 0,
-          selected: isSelected,
-          onTap: () => Actions.invoke(context, intents.SelectIntent(dev)),
-          title: ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              ThemeColors(context).highlightTintColor(36 * (isSelected ? 1 : 0)), BlendMode.colorDodge
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected ? ThemeColors(context).highlightBorderTintColor() : colors.onSecondaryContainer,
-                  width: 0
-                )
-              ),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      color: Color.lerp(colors.secondaryContainer, Colors.white, (isSelected ? 1 : 0) * 0),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(
-                        devType.toIconData,
-                        size: 36,
-                        color: colors.onSecondaryContainer,
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8
-                        ),
-                        color: colors.onSecondaryContainer,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            FieldDisplay(
-                              value: dev.name, 
-                              label: "Name",
-                              verticalMargin: 0,
-                            ),
-                            Row(
-                              children: [
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: Container(
-                                    child: FieldDisplay(
-                                      value: devType.toText, 
-                                      label: "Type",
-                                      verticalMargin: 0,
-                                    ),
-                                  ),
-                                ),
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: Container(
-                                    margin: const EdgeInsets.only(left: 16),
-                                    child: FieldDisplay(
-                                      value: dev.deviceImpl.toText, 
-                                      label: "Implementation",
-                                      verticalMargin: 0,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                            
-                              ],
-                            ),
-                          ]
-                        ),
-                      ),
-                    )
-                  ]
+      return SelectableListTile(
+        state: state,
+        item: device,
+        bgColor: colors.onSecondaryContainer,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                color: colors.secondaryContainer,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(
+                  device.value.deviceType.toIconData,
+                  size: 36,
+                  color: colors.onSecondaryContainer,
                 ),
               ),
-            ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8
+                  ),
+                  color: colors.onSecondaryContainer,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Obx(() => FieldDisplay(
+                        value: device.value.name, 
+                        label: "Name",
+                        verticalMargin: 0,
+                      )),
+                      Row(
+                        children: [
+                          Flexible(
+                            fit: FlexFit.loose,
+                            child: Container(
+                              child: Obx(() => FieldDisplay(
+                                value: device.value.deviceType.toText, 
+                                label: "Type",
+                                verticalMargin: 0,
+                              )),
+                            ),
+                          ),
+                          Flexible(
+                            fit: FlexFit.loose,
+                            child: Container(
+                              margin: const EdgeInsets.only(left: 16),
+                              child: Obx(() => FieldDisplay(
+                                value: device.value.deviceImpl.toText, 
+                                label: "Implementation",
+                                verticalMargin: 0,
+                              )),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                      
+                        ],
+                      ),
+                    ]
+                  ),
+                ),
+              )
+            ]
           ),
-        );
-      });
+        ),
+      );
     });
   }
 }
+

@@ -27,3 +27,14 @@ extension ToDisplayDeviceImpl on DeviceImpl {
     return typeToString[this]!;
   }
 }
+
+//extension TypeString on Type {
+//  String get text {
+//    final toStr = {
+//      Type.white: "White",
+//      Type.color: "Color",
+//      Type.animation: "Animation"
+//    };
+//    return toStr[this]!;
+//  }
+//}

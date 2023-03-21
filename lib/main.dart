@@ -39,10 +39,9 @@ class MyApp extends StatelessWidget {
         ),
         dialogTheme: DialogTheme(
           titleTextStyle: Get.theme.textTheme.bodyLarge,
-          actionsPadding: EdgeInsets.symmetric(
+          actionsPadding: const EdgeInsets.symmetric(
             horizontal: 10,
           ),
-
         ),
       ),
       builder: (context, child) => ResponsiveWrapper.builder(
@@ -51,18 +50,8 @@ class MyApp extends StatelessWidget {
         defaultScaleFactor: 1.6354,
         background: Container(color: const Color(0xFFF5F5F5))
       ),
-      //builder: (BuildContext context, Widget? child) {
-      //  final MediaQueryData data = MediaQuery.of(context);
-      //  return MediaQuery(
-      //    data: data.copyWith(
-      //      textScaleFactor: data.textScaleFactor * 1.6354,
-      //      devicePixelRatio: data.devicePixelRatio,
-      //    ),
-      //    child: child!,
-      //  );
-      //},
       themeMode: ThemeMode.system,
-      home: const Root(),
+      home: Root(),
     );
   }
 }

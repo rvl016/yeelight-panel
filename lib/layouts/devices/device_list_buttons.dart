@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import 'package:yeelight_panel/actions/common/list_intents.dart';
+import 'package:yeelight_panel/bridge_definitions.dart';
 import 'package:yeelight_panel/common/primary_button.dart';
+import 'package:yeelight_panel/data/model_state.dart';
 import 'package:yeelight_panel/layouts/common/dialog.dart';
 import 'package:yeelight_panel/widgets/device_add_dialog.dart';
 
@@ -9,6 +13,7 @@ class DeviceListButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<Rx<ListPageState<DeviceDataInterface>>>();
     return Row(
       children: [
         PrimaryButton(
@@ -20,11 +25,14 @@ class DeviceListButtons extends StatelessWidget {
           marginRight: 4,
         ),
         const Spacer(),
-        PrimaryButton(
-          icon: const Icon(Icons.delete), 
-          label: const Text("Delete"), 
-          onPressed: (ctx) => Actions.invoke(ctx, DeleteIntent()),
-        ),
+        Obx(() => Visibility(
+          visible: state.value.selectedItem.value != null,
+          child: PrimaryButton(
+            icon: const Icon(Icons.delete), 
+            label: const Text("Delete"), 
+            onPressed: (ctx) => Actions.invoke(ctx, DeleteIntent()),
+          ),
+        )),
       ],
     );
   }

@@ -4,7 +4,6 @@ import 'package:extended_masked_text/extended_masked_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:tuple/tuple.dart';
 import 'package:yeelight_panel/actions/common/list_intents.dart';
 import 'package:yeelight_panel/bridge_definitions.dart';
@@ -59,13 +58,12 @@ class _DeviceAddDialogState extends State<DeviceAddDialog> {
     ))) as Future<DeviceDataInterface>)
       .onError((error, _) {
         headerProvider.value = DialogHeaderProvider(
-          message: (error as List<DeviceDetectErrorItem>).map((e) => "${e.field0}: ${e.field1}").join("\n"),
+          message: (error as List<DeviceDetectErrorItemInterface>).map((e) => "${e.field0}: ${e.field1}").join("\n"),
           backgroundColor: ThemeColors(context).errorColor(),
         );
-        return Future.value(DeviceDataInterface(
-          id: '', name: "", capabilities: [], deviceImpl: DeviceImpl.None, deviceType: DeviceType.Bulb
-        ));
+        return Future.error(error, _);
       })
+      .then((v) => Get.back(result: v))
       .whenComplete(() => isEnabled.value = true);
     isEnabled.value = false;
   }

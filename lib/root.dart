@@ -7,15 +7,21 @@ import 'ffi.dart' if (dart.library.html) '../ffi_web.dart';
 import 'layouts/root_layout.dart';
 
 class Root extends StatelessWidget {
-  const Root({super.key});
+  
+  Root({super.key}) {
+    appState = AppState.build(modelState).obs;
+  }
+
+  late Rx<AppState> appState;
+  final Rx<ModelState> modelState = ModelState().obs;
 
   @override
   Widget build(BuildContext context) {
 
     return MultiProvider(
       providers: [
-        Provider(create: (_) => ModelState().obs),
-        Provider(create: (_) => AppState.build().obs),
+        Provider(create: (_) => modelState),
+        Provider(create: (_) => appState),
       ],
       child: Scaffold(
         body: Container(
