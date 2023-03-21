@@ -26,25 +26,63 @@ abstract class Native {
 
   FlutterRustBridgeTaskConstMeta get kInitAppConstMeta;
 
-  Future<List<DeviceDataInterface>> getStoredDevices({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kGetStoredDevicesConstMeta;
-
-  Future<DeviceDetectResult> detectNewDevice(
+  Future<DeviceDetectResultInterface> detectNewDevice(
       {required String deviceName,
       required ConnectionConfigInterface connection,
       dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kDetectNewDeviceConstMeta;
 
+  Future<List<DeviceDataInterface>> getStoredDevices({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetStoredDevicesConstMeta;
+
+  Future<void> removeDevice({required String deviceId, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRemoveDeviceConstMeta;
+
+  Future<DeviceStateUpdateResult> setBrightness(
+      {required String deviceId, required double brightness, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetBrightnessConstMeta;
+
+  Future<DeviceStateUpdateResult> setRgb(
+      {required String deviceId, required RGBInterface rgb, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetRgbConstMeta;
+
+  Future<DeviceStateUpdateResult> setHsv(
+      {required String deviceId, required HSVInterface hsv, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetHsvConstMeta;
+
+  Future<DeviceStateUpdateResult> setCt(
+      {required String deviceId, required CTInterface ct, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetCtConstMeta;
+
+  Future<DeviceStateUpdateResult> setColorMode(
+      {required String deviceId, required ColorMode colorMode, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetColorModeConstMeta;
+
   Future<List<DeviceInterface>> getDevicesForUsing({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kGetDevicesForUsingConstMeta;
 
-  Future<DeviceStateInterface?> getDeviceState(
+  Future<DeviceStateInterface> getDeviceState(
       {required String deviceId, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kGetDeviceStateConstMeta;
+
+  Future<DeviceStateInterface> syncDeviceState(
+      {required String deviceId, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSyncDeviceStateConstMeta;
+
+  Future<List<ProfileInterface>> getProfiles({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetProfilesConstMeta;
 }
 
 class AnimationStateInteface {
@@ -65,10 +103,17 @@ class ColorInterface with _$ColorInterface {
   ) = ColorInterface_CT;
 }
 
-class ColorStateInteface {
-  final int brightness;
+enum ColorMode {
+  None,
+  HSV,
+  RGB,
+  CT,
+}
+
+class ColorStateInterface {
+  final double brightness;
   final ColorInterface color;
-  ColorStateInteface({
+  ColorStateInterface({
     required this.brightness,
     required this.color,
   });
@@ -88,9 +133,23 @@ class CTInterface {
   });
 }
 
+class DeviceActionResultMetaInterface {
+  final bool hadSuccess;
+  final DeviceResultCode code;
+  final String message;
+  DeviceActionResultMetaInterface({
+    required this.hadSuccess,
+    required this.code,
+    required this.message,
+  });
+}
+
 enum DeviceCommandCapability {
   SwitchPower,
-  SetColor,
+  SetBrightness,
+  SetRGB,
+  SetHSV,
+  SetCT,
   SetAnimation,
   SetDirectMode,
 }
@@ -110,23 +169,23 @@ class DeviceDataInterface implements Data {
   });
 }
 
-class DeviceDetectErrorItem {
+class DeviceDetectErrorItemInterface {
   final DeviceImpl field0;
   final String field1;
-  DeviceDetectErrorItem({
+  DeviceDetectErrorItemInterface({
     required this.field0,
     required this.field1,
   });
 }
 
 @freezed
-class DeviceDetectResult with _$DeviceDetectResult {
-  const factory DeviceDetectResult.ok(
+class DeviceDetectResultInterface with _$DeviceDetectResultInterface {
+  const factory DeviceDetectResultInterface.ok(
     DeviceDataInterface field0,
-  ) = DeviceDetectResult_Ok;
-  const factory DeviceDetectResult.error(
-    List<DeviceDetectErrorItem> field0,
-  ) = DeviceDetectResult_Error;
+  ) = DeviceDetectResultInterface_Ok;
+  const factory DeviceDetectResultInterface.error(
+    List<DeviceDetectErrorItemInterface> field0,
+  ) = DeviceDetectResultInterface_Error;
 }
 
 enum DeviceImpl {
@@ -137,10 +196,19 @@ enum DeviceImpl {
 class DeviceInterface implements Data {
   final String id;
   final DeviceDataInterface metadata;
+  final DeviceStateInterface? state;
   DeviceInterface({
     required this.id,
     required this.metadata,
+    this.state,
   });
+}
+
+enum DeviceResultCode {
+  Ok,
+  ConnectionError,
+  DeviceError,
+  RequestError,
 }
 
 class DeviceStateInterface {
@@ -150,6 +218,16 @@ class DeviceStateInterface {
     required this.config,
     required this.runningState,
   });
+}
+
+@freezed
+class DeviceStateUpdateResult with _$DeviceStateUpdateResult {
+  const factory DeviceStateUpdateResult.ok(
+    DeviceStateInterface field0,
+  ) = DeviceStateUpdateResult_Ok;
+  const factory DeviceStateUpdateResult.err(
+    DeviceActionResultMetaInterface field0,
+  ) = DeviceStateUpdateResult_Err;
 }
 
 enum DeviceType {
@@ -164,8 +242,8 @@ class DirectModeStateInterface {
 }
 
 class HSVInterface {
-  final int hue;
-  final int saturation;
+  final double hue;
+  final double saturation;
   HSVInterface({
     required this.hue,
     required this.saturation,
@@ -192,6 +270,46 @@ enum Platform {
   Wasm,
 }
 
+@freezed
+class ProfileDataInterface with _$ProfileDataInterface {
+  const factory ProfileDataInterface.none() = ProfileDataInterface_None;
+  const factory ProfileDataInterface.single(
+    ProfileSingleInterface field0,
+  ) = ProfileDataInterface_Single;
+  const factory ProfileDataInterface.multiple(
+    ProfileMultipleInterface field0,
+  ) = ProfileDataInterface_Multiple;
+}
+
+class ProfileInterface implements Data {
+  final String id;
+  final String name;
+  final ProfileDataInterface data;
+  ProfileInterface({
+    required this.id,
+    required this.name,
+    required this.data,
+  });
+}
+
+class ProfileMultipleInterface {
+  final List<DeviceInterface> devices;
+  final DeviceStateInterface state;
+  ProfileMultipleInterface({
+    required this.devices,
+    required this.state,
+  });
+}
+
+class ProfileSingleInterface {
+  final DeviceInterface device;
+  final DeviceStateInterface state;
+  ProfileSingleInterface({
+    required this.device,
+    required this.state,
+  });
+}
+
 class RGBInterface {
   final U8Array3 rgb;
   RGBInterface({
@@ -203,7 +321,7 @@ class RGBInterface {
 class RunningStateInterface with _$RunningStateInterface {
   const factory RunningStateInterface.none() = RunningStateInterface_None;
   const factory RunningStateInterface.color(
-    ColorStateInteface field0,
+    ColorStateInterface field0,
   ) = RunningStateInterface_Color;
   const factory RunningStateInterface.animation(
     AnimationStateInteface field0,

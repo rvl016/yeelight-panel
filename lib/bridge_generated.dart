@@ -72,6 +72,29 @@ class NativeImpl implements Native {
         argNames: [],
       );
 
+  Future<DeviceDetectResultInterface> detectNewDevice(
+      {required String deviceName,
+      required ConnectionConfigInterface connection,
+      dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceName);
+    var arg1 =
+        _platform.api2wire_box_autoadd_connection_config_interface(connection);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_detect_new_device(port_, arg0, arg1),
+      parseSuccessData: _wire2api_device_detect_result_interface,
+      constMeta: kDetectNewDeviceConstMeta,
+      argValues: [deviceName, connection],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kDetectNewDeviceConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "detect_new_device",
+        argNames: ["deviceName", "connection"],
+      );
+
   Future<List<DeviceDataInterface>> getStoredDevices({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_get_stored_devices(port_),
@@ -88,27 +111,118 @@ class NativeImpl implements Native {
         argNames: [],
       );
 
-  Future<DeviceDetectResult> detectNewDevice(
-      {required String deviceName,
-      required ConnectionConfigInterface connection,
-      dynamic hint}) {
-    var arg0 = _platform.api2wire_String(deviceName);
-    var arg1 =
-        _platform.api2wire_box_autoadd_connection_config_interface(connection);
+  Future<void> removeDevice({required String deviceId, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) =>
-          _platform.inner.wire_detect_new_device(port_, arg0, arg1),
-      parseSuccessData: _wire2api_device_detect_result,
-      constMeta: kDetectNewDeviceConstMeta,
-      argValues: [deviceName, connection],
+      callFfi: (port_) => _platform.inner.wire_remove_device(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kRemoveDeviceConstMeta,
+      argValues: [deviceId],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kDetectNewDeviceConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kRemoveDeviceConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "detect_new_device",
-        argNames: ["deviceName", "connection"],
+        debugName: "remove_device",
+        argNames: ["deviceId"],
+      );
+
+  Future<DeviceStateUpdateResult> setBrightness(
+      {required String deviceId, required double brightness, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
+    var arg1 = api2wire_f32(brightness);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_set_brightness(port_, arg0, arg1),
+      parseSuccessData: _wire2api_device_state_update_result,
+      constMeta: kSetBrightnessConstMeta,
+      argValues: [deviceId, brightness],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetBrightnessConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_brightness",
+        argNames: ["deviceId", "brightness"],
+      );
+
+  Future<DeviceStateUpdateResult> setRgb(
+      {required String deviceId, required RGBInterface rgb, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
+    var arg1 = _platform.api2wire_box_autoadd_rgb_interface(rgb);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_rgb(port_, arg0, arg1),
+      parseSuccessData: _wire2api_device_state_update_result,
+      constMeta: kSetRgbConstMeta,
+      argValues: [deviceId, rgb],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetRgbConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_rgb",
+        argNames: ["deviceId", "rgb"],
+      );
+
+  Future<DeviceStateUpdateResult> setHsv(
+      {required String deviceId, required HSVInterface hsv, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
+    var arg1 = _platform.api2wire_box_autoadd_hsv_interface(hsv);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_hsv(port_, arg0, arg1),
+      parseSuccessData: _wire2api_device_state_update_result,
+      constMeta: kSetHsvConstMeta,
+      argValues: [deviceId, hsv],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetHsvConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_hsv",
+        argNames: ["deviceId", "hsv"],
+      );
+
+  Future<DeviceStateUpdateResult> setCt(
+      {required String deviceId, required CTInterface ct, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
+    var arg1 = _platform.api2wire_box_autoadd_ct_interface(ct);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_set_ct(port_, arg0, arg1),
+      parseSuccessData: _wire2api_device_state_update_result,
+      constMeta: kSetCtConstMeta,
+      argValues: [deviceId, ct],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetCtConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_ct",
+        argNames: ["deviceId", "ct"],
+      );
+
+  Future<DeviceStateUpdateResult> setColorMode(
+      {required String deviceId, required ColorMode colorMode, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
+    var arg1 = api2wire_color_mode(colorMode);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_set_color_mode(port_, arg0, arg1),
+      parseSuccessData: _wire2api_device_state_update_result,
+      constMeta: kSetColorModeConstMeta,
+      argValues: [deviceId, colorMode],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetColorModeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_color_mode",
+        argNames: ["deviceId", "colorMode"],
       );
 
   Future<List<DeviceInterface>> getDevicesForUsing({dynamic hint}) {
@@ -127,12 +241,12 @@ class NativeImpl implements Native {
         argNames: [],
       );
 
-  Future<DeviceStateInterface?> getDeviceState(
+  Future<DeviceStateInterface> getDeviceState(
       {required String deviceId, dynamic hint}) {
     var arg0 = _platform.api2wire_String(deviceId);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_get_device_state(port_, arg0),
-      parseSuccessData: _wire2api_opt_box_autoadd_device_state_interface,
+      parseSuccessData: _wire2api_device_state_interface,
       constMeta: kGetDeviceStateConstMeta,
       argValues: [deviceId],
       hint: hint,
@@ -143,6 +257,40 @@ class NativeImpl implements Native {
       const FlutterRustBridgeTaskConstMeta(
         debugName: "get_device_state",
         argNames: ["deviceId"],
+      );
+
+  Future<DeviceStateInterface> syncDeviceState(
+      {required String deviceId, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(deviceId);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_sync_device_state(port_, arg0),
+      parseSuccessData: _wire2api_device_state_interface,
+      constMeta: kSyncDeviceStateConstMeta,
+      argValues: [deviceId],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSyncDeviceStateConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "sync_device_state",
+        argNames: ["deviceId"],
+      );
+
+  Future<List<ProfileInterface>> getProfiles({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_get_profiles(port_),
+      parseSuccessData: _wire2api_list_profile_interface,
+      constMeta: kGetProfilesConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetProfilesConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_profiles",
+        argNames: [],
       );
 
   void dispose() {
@@ -169,6 +317,11 @@ class NativeImpl implements Native {
     return _wire2api_animation_state_inteface(raw);
   }
 
+  DeviceActionResultMetaInterface
+      _wire2api_box_autoadd_device_action_result_meta_interface(dynamic raw) {
+    return _wire2api_device_action_result_meta_interface(raw);
+  }
+
   DeviceDataInterface _wire2api_box_autoadd_device_data_interface(dynamic raw) {
     return _wire2api_device_data_interface(raw);
   }
@@ -178,12 +331,22 @@ class NativeImpl implements Native {
     return _wire2api_device_state_interface(raw);
   }
 
+  ProfileMultipleInterface _wire2api_box_autoadd_profile_multiple_interface(
+      dynamic raw) {
+    return _wire2api_profile_multiple_interface(raw);
+  }
+
+  ProfileSingleInterface _wire2api_box_autoadd_profile_single_interface(
+      dynamic raw) {
+    return _wire2api_profile_single_interface(raw);
+  }
+
   ColorInterface _wire2api_box_color_interface(dynamic raw) {
     return _wire2api_color_interface(raw);
   }
 
-  ColorStateInteface _wire2api_box_color_state_inteface(dynamic raw) {
-    return _wire2api_color_state_inteface(raw);
+  ColorStateInterface _wire2api_box_color_state_interface(dynamic raw) {
+    return _wire2api_color_state_interface(raw);
   }
 
   ConnectionConfigInterface _wire2api_box_connection_config_interface(
@@ -201,6 +364,18 @@ class NativeImpl implements Native {
 
   DeviceImpl _wire2api_box_device_impl(dynamic raw) {
     return _wire2api_device_impl(raw);
+  }
+
+  DeviceInterface _wire2api_box_device_interface(dynamic raw) {
+    return _wire2api_device_interface(raw);
+  }
+
+  DeviceResultCode _wire2api_box_device_result_code(dynamic raw) {
+    return _wire2api_device_result_code(raw);
+  }
+
+  DeviceStateInterface _wire2api_box_device_state_interface(dynamic raw) {
+    return _wire2api_device_state_interface(raw);
   }
 
   DeviceType _wire2api_box_device_type(dynamic raw) {
@@ -249,12 +424,12 @@ class NativeImpl implements Native {
     }
   }
 
-  ColorStateInteface _wire2api_color_state_inteface(dynamic raw) {
+  ColorStateInterface _wire2api_color_state_interface(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return ColorStateInteface(
-      brightness: _wire2api_u8(arr[0]),
+    return ColorStateInterface(
+      brightness: _wire2api_f32(arr[0]),
       color: _wire2api_box_color_interface(arr[1]),
     );
   }
@@ -277,6 +452,18 @@ class NativeImpl implements Native {
     );
   }
 
+  DeviceActionResultMetaInterface _wire2api_device_action_result_meta_interface(
+      dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return DeviceActionResultMetaInterface(
+      hadSuccess: _wire2api_bool(arr[0]),
+      code: _wire2api_box_device_result_code(arr[1]),
+      message: _wire2api_String(arr[2]),
+    );
+  }
+
   DeviceCommandCapability _wire2api_device_command_capability(dynamic raw) {
     return DeviceCommandCapability.values[raw];
   }
@@ -294,25 +481,27 @@ class NativeImpl implements Native {
     );
   }
 
-  DeviceDetectErrorItem _wire2api_device_detect_error_item(dynamic raw) {
+  DeviceDetectErrorItemInterface _wire2api_device_detect_error_item_interface(
+      dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return DeviceDetectErrorItem(
+    return DeviceDetectErrorItemInterface(
       field0: _wire2api_box_device_impl(arr[0]),
       field1: _wire2api_String(arr[1]),
     );
   }
 
-  DeviceDetectResult _wire2api_device_detect_result(dynamic raw) {
+  DeviceDetectResultInterface _wire2api_device_detect_result_interface(
+      dynamic raw) {
     switch (raw[0]) {
       case 0:
-        return DeviceDetectResult_Ok(
+        return DeviceDetectResultInterface_Ok(
           _wire2api_box_autoadd_device_data_interface(raw[1]),
         );
       case 1:
-        return DeviceDetectResult_Error(
-          _wire2api_list_device_detect_error_item(raw[1]),
+        return DeviceDetectResultInterface_Error(
+          _wire2api_list_device_detect_error_item_interface(raw[1]),
         );
       default:
         throw Exception("unreachable");
@@ -325,12 +514,17 @@ class NativeImpl implements Native {
 
   DeviceInterface _wire2api_device_interface(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return DeviceInterface(
       id: _wire2api_String(arr[0]),
       metadata: _wire2api_box_device_data_interface(arr[1]),
+      state: _wire2api_opt_box_autoadd_device_state_interface(arr[2]),
     );
+  }
+
+  DeviceResultCode _wire2api_device_result_code(dynamic raw) {
+    return DeviceResultCode.values[raw];
   }
 
   DeviceStateInterface _wire2api_device_state_interface(dynamic raw) {
@@ -341,6 +535,21 @@ class NativeImpl implements Native {
       config: _wire2api_box_connection_config_interface(arr[0]),
       runningState: _wire2api_box_running_state_interface(arr[1]),
     );
+  }
+
+  DeviceStateUpdateResult _wire2api_device_state_update_result(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return DeviceStateUpdateResult_Ok(
+          _wire2api_box_autoadd_device_state_interface(raw[1]),
+        );
+      case 1:
+        return DeviceStateUpdateResult_Err(
+          _wire2api_box_autoadd_device_action_result_meta_interface(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   DeviceType _wire2api_device_type(dynamic raw) {
@@ -356,13 +565,17 @@ class NativeImpl implements Native {
     );
   }
 
+  double _wire2api_f32(dynamic raw) {
+    return raw as double;
+  }
+
   HSVInterface _wire2api_hsv_interface(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return HSVInterface(
-      hue: _wire2api_u16(arr[0]),
-      saturation: _wire2api_u16(arr[1]),
+      hue: _wire2api_f32(arr[0]),
+      saturation: _wire2api_f32(arr[1]),
     );
   }
 
@@ -384,15 +597,19 @@ class NativeImpl implements Native {
     return (raw as List<dynamic>).map(_wire2api_device_data_interface).toList();
   }
 
-  List<DeviceDetectErrorItem> _wire2api_list_device_detect_error_item(
-      dynamic raw) {
+  List<DeviceDetectErrorItemInterface>
+      _wire2api_list_device_detect_error_item_interface(dynamic raw) {
     return (raw as List<dynamic>)
-        .map(_wire2api_device_detect_error_item)
+        .map(_wire2api_device_detect_error_item_interface)
         .toList();
   }
 
   List<DeviceInterface> _wire2api_list_device_interface(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_device_interface).toList();
+  }
+
+  List<ProfileInterface> _wire2api_list_profile_interface(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_profile_interface).toList();
   }
 
   List<Wrapper> _wire2api_list_wrapper(dynamic raw) {
@@ -410,6 +627,54 @@ class NativeImpl implements Native {
     return Platform.values[raw];
   }
 
+  ProfileDataInterface _wire2api_profile_data_interface(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return ProfileDataInterface_None();
+      case 1:
+        return ProfileDataInterface_Single(
+          _wire2api_box_autoadd_profile_single_interface(raw[1]),
+        );
+      case 2:
+        return ProfileDataInterface_Multiple(
+          _wire2api_box_autoadd_profile_multiple_interface(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  ProfileInterface _wire2api_profile_interface(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ProfileInterface(
+      id: _wire2api_String(arr[0]),
+      name: _wire2api_String(arr[1]),
+      data: _wire2api_profile_data_interface(arr[2]),
+    );
+  }
+
+  ProfileMultipleInterface _wire2api_profile_multiple_interface(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ProfileMultipleInterface(
+      devices: _wire2api_list_device_interface(arr[0]),
+      state: _wire2api_box_device_state_interface(arr[1]),
+    );
+  }
+
+  ProfileSingleInterface _wire2api_profile_single_interface(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ProfileSingleInterface(
+      device: _wire2api_box_device_interface(arr[0]),
+      state: _wire2api_box_device_state_interface(arr[1]),
+    );
+  }
+
   RGBInterface _wire2api_rgb_interface(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1)
@@ -425,7 +690,7 @@ class NativeImpl implements Native {
         return RunningStateInterface_None();
       case 1:
         return RunningStateInterface_Color(
-          _wire2api_box_color_state_inteface(raw[1]),
+          _wire2api_box_color_state_interface(raw[1]),
         );
       case 2:
         return RunningStateInterface_Animation(
@@ -477,6 +742,21 @@ class NativeImpl implements Native {
 // Section: api2wire
 
 @protected
+int api2wire_color_mode(ColorMode raw) {
+  return api2wire_i32(raw.index);
+}
+
+@protected
+double api2wire_f32(double raw) {
+  return raw;
+}
+
+@protected
+int api2wire_i32(int raw) {
+  return raw;
+}
+
+@protected
 int api2wire_u16(int raw) {
   return raw;
 }
@@ -508,11 +788,42 @@ class NativePlatform extends FlutterRustBridgeBase<NativeWire> {
   }
 
   @protected
+  ffi.Pointer<wire_CTInterface> api2wire_box_autoadd_ct_interface(
+      CTInterface raw) {
+    final ptr = inner.new_box_autoadd_ct_interface_0();
+    _api_fill_to_wire_ct_interface(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_HSVInterface> api2wire_box_autoadd_hsv_interface(
+      HSVInterface raw) {
+    final ptr = inner.new_box_autoadd_hsv_interface_0();
+    _api_fill_to_wire_hsv_interface(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_RGBInterface> api2wire_box_autoadd_rgb_interface(
+      RGBInterface raw) {
+    final ptr = inner.new_box_autoadd_rgb_interface_0();
+    _api_fill_to_wire_rgb_interface(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_IPv4ConnectionInteface>
       api2wire_box_i_pv_4_connection_inteface(IPv4ConnectionInteface raw) {
     final ptr = inner.new_box_i_pv_4_connection_inteface_0();
     _api_fill_to_wire_i_pv_4_connection_inteface(raw, ptr.ref);
     return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_u8_array_3(U8Array3 raw) {
+    final ans = inner.new_uint_8_list_0(3);
+    ans.ref.ptr.asTypedList(3).setAll(0, raw);
+    return ans;
   }
 
   @protected
@@ -538,6 +849,21 @@ class NativePlatform extends FlutterRustBridgeBase<NativeWire> {
     _api_fill_to_wire_connection_config_interface(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_ct_interface(
+      CTInterface apiObj, ffi.Pointer<wire_CTInterface> wireObj) {
+    _api_fill_to_wire_ct_interface(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_hsv_interface(
+      HSVInterface apiObj, ffi.Pointer<wire_HSVInterface> wireObj) {
+    _api_fill_to_wire_hsv_interface(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_rgb_interface(
+      RGBInterface apiObj, ffi.Pointer<wire_RGBInterface> wireObj) {
+    _api_fill_to_wire_rgb_interface(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_i_pv_4_connection_inteface(
       IPv4ConnectionInteface apiObj,
       ffi.Pointer<wire_IPv4ConnectionInteface> wireObj) {
@@ -550,10 +876,26 @@ class NativePlatform extends FlutterRustBridgeBase<NativeWire> {
     wireObj.ip_v4 = api2wire_box_i_pv_4_connection_inteface(apiObj.ipV4);
   }
 
+  void _api_fill_to_wire_ct_interface(
+      CTInterface apiObj, wire_CTInterface wireObj) {
+    wireObj.temperature = api2wire_u16(apiObj.temperature);
+  }
+
+  void _api_fill_to_wire_hsv_interface(
+      HSVInterface apiObj, wire_HSVInterface wireObj) {
+    wireObj.hue = api2wire_f32(apiObj.hue);
+    wireObj.saturation = api2wire_f32(apiObj.saturation);
+  }
+
   void _api_fill_to_wire_i_pv_4_connection_inteface(
       IPv4ConnectionInteface apiObj, wire_IPv4ConnectionInteface wireObj) {
     wireObj.ip = api2wire_u8_array_4(apiObj.ip);
     wireObj.port = api2wire_u16(apiObj.port);
+  }
+
+  void _api_fill_to_wire_rgb_interface(
+      RGBInterface apiObj, wire_RGBInterface wireObj) {
+    wireObj.rgb = api2wire_u8_array_3(apiObj.rgb);
   }
 }
 
@@ -694,20 +1036,6 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _wire_init_app =
       _wire_init_appPtr.asFunction<void Function(int)>();
 
-  void wire_get_stored_devices(
-    int port_,
-  ) {
-    return _wire_get_stored_devices(
-      port_,
-    );
-  }
-
-  late final _wire_get_stored_devicesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'wire_get_stored_devices');
-  late final _wire_get_stored_devices =
-      _wire_get_stored_devicesPtr.asFunction<void Function(int)>();
-
   void wire_detect_new_device(
     int port_,
     ffi.Pointer<wire_uint_8_list> device_name,
@@ -728,6 +1056,135 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _wire_detect_new_device = _wire_detect_new_devicePtr.asFunction<
       void Function(int, ffi.Pointer<wire_uint_8_list>,
           ffi.Pointer<wire_ConnectionConfigInterface>)>();
+
+  void wire_get_stored_devices(
+    int port_,
+  ) {
+    return _wire_get_stored_devices(
+      port_,
+    );
+  }
+
+  late final _wire_get_stored_devicesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_get_stored_devices');
+  late final _wire_get_stored_devices =
+      _wire_get_stored_devicesPtr.asFunction<void Function(int)>();
+
+  void wire_remove_device(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+  ) {
+    return _wire_remove_device(
+      port_,
+      device_id,
+    );
+  }
+
+  late final _wire_remove_devicePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_remove_device');
+  late final _wire_remove_device = _wire_remove_devicePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_set_brightness(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+    double brightness,
+  ) {
+    return _wire_set_brightness(
+      port_,
+      device_id,
+      brightness,
+    );
+  }
+
+  late final _wire_set_brightnessPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Float)>>('wire_set_brightness');
+  late final _wire_set_brightness = _wire_set_brightnessPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, double)>();
+
+  void wire_set_rgb(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+    ffi.Pointer<wire_RGBInterface> rgb,
+  ) {
+    return _wire_set_rgb(
+      port_,
+      device_id,
+      rgb,
+    );
+  }
+
+  late final _wire_set_rgbPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_RGBInterface>)>>('wire_set_rgb');
+  late final _wire_set_rgb = _wire_set_rgbPtr.asFunction<
+      void Function(int, ffi.Pointer<wire_uint_8_list>,
+          ffi.Pointer<wire_RGBInterface>)>();
+
+  void wire_set_hsv(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+    ffi.Pointer<wire_HSVInterface> hsv,
+  ) {
+    return _wire_set_hsv(
+      port_,
+      device_id,
+      hsv,
+    );
+  }
+
+  late final _wire_set_hsvPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_HSVInterface>)>>('wire_set_hsv');
+  late final _wire_set_hsv = _wire_set_hsvPtr.asFunction<
+      void Function(int, ffi.Pointer<wire_uint_8_list>,
+          ffi.Pointer<wire_HSVInterface>)>();
+
+  void wire_set_ct(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+    ffi.Pointer<wire_CTInterface> ct,
+  ) {
+    return _wire_set_ct(
+      port_,
+      device_id,
+      ct,
+    );
+  }
+
+  late final _wire_set_ctPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_CTInterface>)>>('wire_set_ct');
+  late final _wire_set_ct = _wire_set_ctPtr.asFunction<
+      void Function(
+          int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_CTInterface>)>();
+
+  void wire_set_color_mode(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+    int color_mode,
+  ) {
+    return _wire_set_color_mode(
+      port_,
+      device_id,
+      color_mode,
+    );
+  }
+
+  late final _wire_set_color_modePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
+              ffi.Int32)>>('wire_set_color_mode');
+  late final _wire_set_color_mode = _wire_set_color_modePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, int)>();
 
   void wire_get_devices_for_using(
     int port_,
@@ -760,6 +1217,37 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _wire_get_device_state = _wire_get_device_statePtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
+  void wire_sync_device_state(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> device_id,
+  ) {
+    return _wire_sync_device_state(
+      port_,
+      device_id,
+    );
+  }
+
+  late final _wire_sync_device_statePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_sync_device_state');
+  late final _wire_sync_device_state = _wire_sync_device_statePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_get_profiles(
+    int port_,
+  ) {
+    return _wire_get_profiles(
+      port_,
+    );
+  }
+
+  late final _wire_get_profilesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_get_profiles');
+  late final _wire_get_profiles =
+      _wire_get_profilesPtr.asFunction<void Function(int)>();
+
   ffi.Pointer<wire_ConnectionConfigInterface>
       new_box_autoadd_connection_config_interface_0() {
     return _new_box_autoadd_connection_config_interface_0();
@@ -772,6 +1260,39 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_connection_config_interface_0 =
       _new_box_autoadd_connection_config_interface_0Ptr
           .asFunction<ffi.Pointer<wire_ConnectionConfigInterface> Function()>();
+
+  ffi.Pointer<wire_CTInterface> new_box_autoadd_ct_interface_0() {
+    return _new_box_autoadd_ct_interface_0();
+  }
+
+  late final _new_box_autoadd_ct_interface_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_CTInterface> Function()>>(
+          'new_box_autoadd_ct_interface_0');
+  late final _new_box_autoadd_ct_interface_0 =
+      _new_box_autoadd_ct_interface_0Ptr
+          .asFunction<ffi.Pointer<wire_CTInterface> Function()>();
+
+  ffi.Pointer<wire_HSVInterface> new_box_autoadd_hsv_interface_0() {
+    return _new_box_autoadd_hsv_interface_0();
+  }
+
+  late final _new_box_autoadd_hsv_interface_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_HSVInterface> Function()>>(
+          'new_box_autoadd_hsv_interface_0');
+  late final _new_box_autoadd_hsv_interface_0 =
+      _new_box_autoadd_hsv_interface_0Ptr
+          .asFunction<ffi.Pointer<wire_HSVInterface> Function()>();
+
+  ffi.Pointer<wire_RGBInterface> new_box_autoadd_rgb_interface_0() {
+    return _new_box_autoadd_rgb_interface_0();
+  }
+
+  late final _new_box_autoadd_rgb_interface_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_RGBInterface> Function()>>(
+          'new_box_autoadd_rgb_interface_0');
+  late final _new_box_autoadd_rgb_interface_0 =
+      _new_box_autoadd_rgb_interface_0Ptr
+          .asFunction<ffi.Pointer<wire_RGBInterface> Function()>();
 
   ffi.Pointer<wire_IPv4ConnectionInteface>
       new_box_i_pv_4_connection_inteface_0() {
@@ -834,6 +1355,23 @@ class wire_IPv4ConnectionInteface extends ffi.Struct {
 
 class wire_ConnectionConfigInterface extends ffi.Struct {
   external ffi.Pointer<wire_IPv4ConnectionInteface> ip_v4;
+}
+
+class wire_RGBInterface extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> rgb;
+}
+
+class wire_HSVInterface extends ffi.Struct {
+  @ffi.Float()
+  external double hue;
+
+  @ffi.Float()
+  external double saturation;
+}
+
+class wire_CTInterface extends ffi.Struct {
+  @ffi.Uint16()
+  external int temperature;
 }
 
 typedef DartPostCObjectFnType = ffi.Pointer<

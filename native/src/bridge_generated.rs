@@ -22,6 +22,8 @@ use std::sync::Arc;
 use crate::base::data::device_metadata::DeviceCommandCapability;
 use crate::base::data::device_metadata::DeviceImpl;
 use crate::base::data::device_metadata::DeviceType;
+use crate::base::data::device_result::DeviceResultCode;
+use crate::base::data::device_state::ColorMode;
 
 // Section: wire functions
 
@@ -55,16 +57,6 @@ fn wire_init_app_impl(port_: MessagePort) {
         move || move |task_callback| Ok(init_app()),
     )
 }
-fn wire_get_stored_devices_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "get_stored_devices",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| Ok(get_stored_devices()),
-    )
-}
 fn wire_detect_new_device_impl(
     port_: MessagePort,
     device_name: impl Wire2Api<String> + UnwindSafe,
@@ -80,6 +72,119 @@ fn wire_detect_new_device_impl(
             let api_device_name = device_name.wire2api();
             let api_connection = connection.wire2api();
             move |task_callback| Ok(detect_new_device(api_device_name, api_connection))
+        },
+    )
+}
+fn wire_get_stored_devices_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "get_stored_devices",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Ok(get_stored_devices()),
+    )
+}
+fn wire_remove_device_impl(port_: MessagePort, device_id: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "remove_device",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            move |task_callback| Ok(remove_device(api_device_id))
+        },
+    )
+}
+fn wire_set_brightness_impl(
+    port_: MessagePort,
+    device_id: impl Wire2Api<String> + UnwindSafe,
+    brightness: impl Wire2Api<f32> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_brightness",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            let api_brightness = brightness.wire2api();
+            move |task_callback| Ok(set_brightness(api_device_id, api_brightness))
+        },
+    )
+}
+fn wire_set_rgb_impl(
+    port_: MessagePort,
+    device_id: impl Wire2Api<String> + UnwindSafe,
+    rgb: impl Wire2Api<RGBInterface> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_rgb",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            let api_rgb = rgb.wire2api();
+            move |task_callback| Ok(set_rgb(api_device_id, api_rgb))
+        },
+    )
+}
+fn wire_set_hsv_impl(
+    port_: MessagePort,
+    device_id: impl Wire2Api<String> + UnwindSafe,
+    hsv: impl Wire2Api<HSVInterface> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_hsv",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            let api_hsv = hsv.wire2api();
+            move |task_callback| Ok(set_hsv(api_device_id, api_hsv))
+        },
+    )
+}
+fn wire_set_ct_impl(
+    port_: MessagePort,
+    device_id: impl Wire2Api<String> + UnwindSafe,
+    ct: impl Wire2Api<CTInterface> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_ct",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            let api_ct = ct.wire2api();
+            move |task_callback| Ok(set_ct(api_device_id, api_ct))
+        },
+    )
+}
+fn wire_set_color_mode_impl(
+    port_: MessagePort,
+    device_id: impl Wire2Api<String> + UnwindSafe,
+    color_mode: impl Wire2Api<ColorMode> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_color_mode",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            let api_color_mode = color_mode.wire2api();
+            move |task_callback| Ok(set_color_mode(api_device_id, api_color_mode))
         },
     )
 }
@@ -106,6 +211,29 @@ fn wire_get_device_state_impl(port_: MessagePort, device_id: impl Wire2Api<Strin
         },
     )
 }
+fn wire_sync_device_state_impl(port_: MessagePort, device_id: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "sync_device_state",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_device_id = device_id.wire2api();
+            move |task_callback| Ok(sync_device_state(api_device_id))
+        },
+    )
+}
+fn wire_get_profiles_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "get_profiles",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Ok(get_profiles()),
+    )
+}
 // Section: wrapper structs
 
 // Section: static checks
@@ -126,6 +254,30 @@ where
 {
     fn wire2api(self) -> Option<T> {
         (!self.is_null()).then(|| self.wire2api())
+    }
+}
+
+impl Wire2Api<ColorMode> for i32 {
+    fn wire2api(self) -> ColorMode {
+        match self {
+            0 => ColorMode::None,
+            1 => ColorMode::HSV,
+            2 => ColorMode::RGB,
+            3 => ColorMode::CT,
+            _ => unreachable!("Invalid variant for ColorMode: {}", self),
+        }
+    }
+}
+
+impl Wire2Api<f32> for f32 {
+    fn wire2api(self) -> f32 {
+        self
+    }
+}
+
+impl Wire2Api<i32> for i32 {
+    fn wire2api(self) -> i32 {
+        self
     }
 }
 
@@ -161,12 +313,12 @@ impl support::IntoDart for ColorInterface {
     }
 }
 impl support::IntoDartExceptPrimitive for ColorInterface {}
-impl support::IntoDart for ColorStateInteface {
+impl support::IntoDart for ColorStateInterface {
     fn into_dart(self) -> support::DartAbi {
         vec![self.brightness.into_dart(), (*self.color).into_dart()].into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for ColorStateInteface {}
+impl support::IntoDartExceptPrimitive for ColorStateInterface {}
 
 impl support::IntoDart for ConnectionConfigInterface {
     fn into_dart(self) -> support::DartAbi {
@@ -182,13 +334,28 @@ impl support::IntoDart for CTInterface {
 }
 impl support::IntoDartExceptPrimitive for CTInterface {}
 
+impl support::IntoDart for DeviceActionResultMetaInterface {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.had_success.into_dart(),
+            (*self.code).into_dart(),
+            self.message.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for DeviceActionResultMetaInterface {}
+
 impl support::IntoDart for DeviceCommandCapability {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::SwitchPower => 0,
-            Self::SetColor => 1,
-            Self::SetAnimation => 2,
-            Self::SetDirectMode => 3,
+            Self::SetBrightness => 1,
+            Self::SetRGB => 2,
+            Self::SetHSV => 3,
+            Self::SetCT => 4,
+            Self::SetAnimation => 5,
+            Self::SetDirectMode => 6,
         }
         .into_dart()
     }
@@ -207,14 +374,14 @@ impl support::IntoDart for DeviceDataInterface {
 }
 impl support::IntoDartExceptPrimitive for DeviceDataInterface {}
 
-impl support::IntoDart for DeviceDetectErrorItem {
+impl support::IntoDart for DeviceDetectErrorItemInterface {
     fn into_dart(self) -> support::DartAbi {
         vec![(*self.0).into_dart(), self.1.into_dart()].into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for DeviceDetectErrorItem {}
+impl support::IntoDartExceptPrimitive for DeviceDetectErrorItemInterface {}
 
-impl support::IntoDart for DeviceDetectResult {
+impl support::IntoDart for DeviceDetectResultInterface {
     fn into_dart(self) -> support::DartAbi {
         match self {
             Self::Ok(field0) => vec![0.into_dart(), field0.into_dart()],
@@ -223,7 +390,7 @@ impl support::IntoDart for DeviceDetectResult {
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for DeviceDetectResult {}
+impl support::IntoDartExceptPrimitive for DeviceDetectResultInterface {}
 impl support::IntoDart for DeviceImpl {
     fn into_dart(self) -> support::DartAbi {
         match self {
@@ -235,11 +402,27 @@ impl support::IntoDart for DeviceImpl {
 }
 impl support::IntoDart for DeviceInterface {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.id.into_dart(), (*self.metadata).into_dart()].into_dart()
+        vec![
+            self.id.into_dart(),
+            (*self.metadata).into_dart(),
+            self.state.into_dart(),
+        ]
+        .into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for DeviceInterface {}
 
+impl support::IntoDart for DeviceResultCode {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok => 0,
+            Self::ConnectionError => 1,
+            Self::DeviceError => 2,
+            Self::RequestError => 3,
+        }
+        .into_dart()
+    }
+}
 impl support::IntoDart for DeviceStateInterface {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -251,6 +434,16 @@ impl support::IntoDart for DeviceStateInterface {
 }
 impl support::IntoDartExceptPrimitive for DeviceStateInterface {}
 
+impl support::IntoDart for DeviceStateUpdateResult {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::Ok(field0) => vec![0.into_dart(), field0.into_dart()],
+            Self::Err(field0) => vec![1.into_dart(), field0.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for DeviceStateUpdateResult {}
 impl support::IntoDart for DeviceType {
     fn into_dart(self) -> support::DartAbi {
         match self {
@@ -295,6 +488,43 @@ impl support::IntoDart for Platform {
         .into_dart()
     }
 }
+impl support::IntoDart for ProfileDataInterface {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::None => vec![0.into_dart()],
+            Self::Single(field0) => vec![1.into_dart(), field0.into_dart()],
+            Self::Multiple(field0) => vec![2.into_dart(), field0.into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ProfileDataInterface {}
+impl support::IntoDart for ProfileInterface {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.id.into_dart(),
+            self.name.into_dart(),
+            self.data.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ProfileInterface {}
+
+impl support::IntoDart for ProfileMultipleInterface {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.devices.into_dart(), (*self.state).into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ProfileMultipleInterface {}
+
+impl support::IntoDart for ProfileSingleInterface {
+    fn into_dart(self) -> support::DartAbi {
+        vec![(*self.device).into_dart(), (*self.state).into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for ProfileSingleInterface {}
+
 impl support::IntoDart for RGBInterface {
     fn into_dart(self) -> support::DartAbi {
         vec![self.rgb.into_dart()].into_dart()
