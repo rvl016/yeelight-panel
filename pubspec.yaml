@@ -44,7 +44,7 @@ dependencies:
   dbus: ^0.7.8
   provider: ^6.0.5
   morphable_shape: ^1.6.5
-  fl_chart: ^0.60.0
+  fl_chart: ^0.62.0
   syncfusion_flutter_core: ^20.4.53
   syncfusion_flutter_sliders: ^20.4.53
   tuple: ^2.0.1
